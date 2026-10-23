@@ -5,6 +5,7 @@ const STORE = {
   ios: 'https://apps.apple.com/app/id6825570982',
 };
 
+const VIDEO_REV = 2; // bump when the clips are re-rendered
 const VIDEO_LANGS = { ko: 'ko', ja: 'ja', 'zh-TW': 'zh_TW' }; // others fall back to English
 const FONTS = {
   ko: 'Jua', ja: 'M+PLUS+Rounded+1c:wght@800', 'zh-TW': 'Noto+Sans+TC:wght@900',
@@ -135,8 +136,8 @@ function setVideo(l) {
   const v = VIDEO_LANGS[l] || 'en';
   if (vid.dataset.v === v) return;
   vid.dataset.v = v;
-  vid.poster = `assets/video/poster_${v}.webp`;
-  vid.src = `assets/video/play_${v}.mp4`;
+  vid.poster = `assets/video/poster_${v}.webp?v=${VIDEO_REV}`;
+  vid.src = `assets/video/play_${v}.mp4?v=${VIDEO_REV}`;
   if (vidSeen && !reduced) vid.play().catch(() => {});
 }
 function syncPaused() { phone.classList.toggle('paused', vid.paused); }
