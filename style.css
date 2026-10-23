@@ -460,6 +460,7 @@ a.badge:hover { transform: translateY(-3px); }
   .video-sec { padding: 84px 16px 96px; border-radius: 32px 32px 0 0; }
   .peek { translate: -40% 0; width: 110px; bottom: -4%; }
   .cta { border-radius: 32px 32px 0 0; }
+  .brand { padding: 3px; gap: 0; }
   .brand span { display: none; }
 }
 @media (max-width: 480px) {
