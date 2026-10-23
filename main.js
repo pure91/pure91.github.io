@@ -189,16 +189,25 @@ if (!reduced) setInterval(() => {
 const GRADES = ['D', 'C', 'B', 'A', 'S', '★1', '★2', '★3'];
 const WEAPONS = ['revolver', 'shotgun', 'water', 'dynamite', 'rifle', 'flamer', 'gatling', 'cannon', 'railgun', 'comet'];
 const merge = $('#merge');
+const MERGE_MS = 2800, PAIR_SWAP_AT = .65; // pair is hidden from 44% to the end of each loop
 let mi = 0;
-function setMerge() {
-  const g = mi % (GRADES.length - 1), w = WEAPONS[mi % WEAPONS.length], w2 = WEAPONS[(mi + 1) % WEAPONS.length];
-  $$('.slot.l img, .slot.r img', merge).forEach(i => { i.src = `assets/weapons/${w}.webp`; });
-  $$('.slot.l em, .slot.r em', merge).forEach(e => { e.textContent = GRADES[g]; });
-  $('.slot.out img', merge).src = `assets/weapons/${w2}.webp`;
-  $('.slot.out em', merge).textContent = GRADES[g + 1];
+// Each part is swapped only while it is invisible, so no old weapon flashes on screen.
+function setPair(k) {
+  $$('.slot.l img, .slot.r img', merge).forEach(i => { i.src = `assets/weapons/${WEAPONS[k % WEAPONS.length]}.webp`; });
+  $$('.slot.l em, .slot.r em', merge).forEach(e => { e.textContent = GRADES[k % (GRADES.length - 1)]; });
 }
-setMerge();
-$('.slot.out', merge).addEventListener('animationiteration', () => { mi++; setMerge(); });
+function setResult(k) {
+  $('.slot.out img', merge).src = `assets/weapons/${WEAPONS[(k + 1) % WEAPONS.length]}.webp`;
+  $('.slot.out em', merge).textContent = GRADES[k % (GRADES.length - 1) + 1];
+}
+function schedulePair() {
+  const a = $('.slot.out', merge).getAnimations()[0];
+  const t = a && a.currentTime != null ? a.currentTime % MERGE_MS : 0;
+  setTimeout(() => setPair(mi + 1), Math.max(0, MERGE_MS * PAIR_SWAP_AT - t));
+}
+setPair(0); setResult(0);
+$('.slot.out', merge).addEventListener('animationiteration', () => { mi++; setResult(mi); schedulePair(); });
+if (!reduced) schedulePair();
 // preload weapons so swaps never flash
 WEAPONS.forEach(w => { new Image().src = `assets/weapons/${w}.webp`; });
 
