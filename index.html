@@ -2,85 +2,189 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Squirrel Sheriff: Idle RPG · Acorn Lab Games</title>
-<meta name="description" content="Squirrel Sheriff: Idle RPG by Acorn Lab Games. Just keep it on and your squirrel sheriff and crew fight for you. Pull and merge toy guns, collect pets and crew.">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Squirrel Sheriff: Idle RPG</title>
+<meta name="description" content="Just leave it on and the Squirrel Sheriff and crew fight for you! Pull and merge weapons and pets in this cute idle RPG. By Acorn Lab Games.">
+<meta name="theme-color" content="#F07A2A">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Acorn Lab Games">
 <meta property="og:title" content="Squirrel Sheriff: Idle RPG">
-<meta property="og:description" content="Just keep it on and the squirrel sheriff fights for you. Free idle RPG for Android & iOS.">
-<meta property="og:image" content="https://pure91.github.io/img/feature.jpg">
-<link rel="icon" href="img/icon.png">
-<style>
-:root{--bg:#FFF4E2;--card:#FFFFFF;--ink:#3B2414;--sub:#7A5A43;--accent:#E8742A;--accent2:#F5B935;--line:#EAD7BC}
-@media (prefers-color-scheme:dark){:root{--bg:#1E1611;--card:#2A2019;--ink:#F6E9D8;--sub:#C9AE93;--line:#43342A}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Noto Sans KR",sans-serif;line-height:1.6}
-a{color:var(--accent)}
-main{max-width:960px;margin:0 auto;padding:24px 16px 48px}
-.hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
-.hero img.icon{width:112px;height:112px;border-radius:26px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
-h1{margin:0;font-size:clamp(26px,5vw,40px);line-height:1.2}
-.tag{margin:4px 0 0;color:var(--sub)}
-.badges{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.badge{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;background:var(--ink);color:var(--bg);text-decoration:none;font-weight:600}
-.badge small{display:block;font-weight:400;opacity:.8;font-size:11px;line-height:1}
-.soon{font-size:13px;color:var(--sub);margin-top:8px}
-.banner{width:100%;border-radius:18px;margin:24px 0;display:block}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
-.grid img{width:100%;border-radius:14px;border:1px solid var(--line)}
-section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;margin:20px 0}
-h2{margin:0 0 10px;font-size:22px}
-ul{padding-left:20px;margin:0}
-.ko{color:var(--sub);font-size:15px}
-footer{color:var(--sub);font-size:14px;text-align:center;margin-top:32px}
-</style>
+<meta property="og:description" content="Just leave it on and the Squirrel Sheriff and crew fight for you! Free idle RPG for Android &amp; iOS.">
+<meta property="og:image" content="https://acornlab.app/assets/og.jpg">
+<meta property="og:url" content="https://acornlab.app/">
+<link rel="canonical" href="https://acornlab.app/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap">
+<link rel="preload" as="image" href="assets/chars/mascot_gun.webp">
+<link rel="stylesheet" href="style.css?v=3">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"MobileApplication","name":"Squirrel Sheriff: Idle RPG","alternateName":"다람쥐 키우기 : 방치형 보안관 RPG","operatingSystem":"Android, iOS","applicationCategory":"GameApplication","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"author":{"@type":"Organization","name":"Acorn Lab Games","email":"acornlab.games@gmail.com"},"image":"https://acornlab.app/assets/icon-192.png"}
+</script>
 </head>
 <body>
-<main>
-  <div class="hero">
-    <img class="icon" src="img/icon.png" alt="Squirrel Sheriff app icon">
-    <div>
-      <h1>Squirrel Sheriff: Idle RPG</h1>
-      <p class="tag">Just keep it on — the squirrel sheriff and crew fight for you!<br><span class="ko">다람쥐 키우기 : 방치형 보안관 RPG · 켜 두기만 해도 알아서 싸워요!</span></p>
-      <div class="badges">
-        <a class="badge" href="https://play.google.com/store/apps/details?id=com.squirrelsheriff.idle"><span><small>GET IT ON</small>Google Play</span></a>
-        <a class="badge" href="https://apps.apple.com/app/id6825570982"><span><small>Download on the</small>App Store</span></a>
-      </div>
-      <p class="soon">Free to play · Android &amp; iOS · 무료 · 안드로이드 &amp; iOS</p>
+<header class="top">
+  <a class="brand" href="#top" aria-label="Home">
+    <img src="assets/icon-192.png" width="40" height="40" alt="">
+    <span>Acorn Lab Games</span>
+  </a>
+  <div class="lang" id="langPicker">
+    <button type="button" class="lang-btn" id="langBtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="langList">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm6.9 6h-3a15.7 15.7 0 0 0-1.4-3.6A8 8 0 0 1 18.9 8ZM12 4c.8 1.2 1.5 2.5 1.9 4h-3.8c.4-1.5 1.1-2.8 1.9-4ZM4.3 14a8.2 8.2 0 0 1 0-4h3.4a16.5 16.5 0 0 0 0 4H4.3Zm.8 2h3a15.7 15.7 0 0 0 1.4 3.6A8 8 0 0 1 5.1 16Zm3-8h-3a8 8 0 0 1 4.4-3.6C8.9 5.5 8.4 6.7 8.1 8ZM12 20c-.8-1.2-1.5-2.5-1.9-4h3.8c-.4 1.5-1.1 2.8-1.9 4Zm2.3-6H9.7a14.7 14.7 0 0 1 0-4h4.6a14.7 14.7 0 0 1 0 4Zm.2 5.6c.6-1.1 1.1-2.3 1.4-3.6h3a8 8 0 0 1-4.4 3.6Zm1.8-5.6a16.5 16.5 0 0 0 0-4h3.4a8.2 8.2 0 0 1 0 4h-3.4Z"/></svg>
+    <span id="langCur">English</span>
+    <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <ul class="lang-list" id="langList" role="listbox" aria-label="Language" tabindex="-1" hidden></ul>
+  </div>
+</header>
+
+<main id="top">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="rays" aria-hidden="true"></div>
+    <div class="sky" aria-hidden="true" id="sky"></div>
+    <div class="hero-copy">
+      <h1 class="title" data-t="title1">Squirrel Sheriff</h1>
+      <p class="pill" data-t="title2">Idle RPG</p>
+      <p class="tagline" data-t="subtitle">Cute squirrels fight for you</p>
+      <div class="badges" data-badges></div>
     </div>
-  </div>
-
-  <img class="banner" src="img/feature.jpg" alt="Squirrel Sheriff gameplay banner">
-
-  <div class="grid">
-    <img src="img/shot1.jpg" alt="Idle battle">
-    <img src="img/shot2.jpg" alt="Boss hunt">
-    <img src="img/shot3.jpg" alt="Pull and merge weapons">
-    <img src="img/shot4.jpg" alt="Town defense">
-    <img src="img/shot5.jpg" alt="Picnic chase">
-    <img src="img/shot6.jpg" alt="Dig for treasure">
-  </div>
-
-  <section>
-    <h2>About the game <span class="ko">· 게임 소개</span></h2>
-    <ul>
-      <li>Idle battles that keep going while you're away. <span class="ko">켜 두어도, 꺼 두어도 성장</span></li>
-      <li>Pull and merge quirky toy guns, from D up to ★3. <span class="ko">무기 뽑기와 합성</span></li>
-      <li>Collect 27 pets, recruit a crew and dress them in skins. <span class="ko">펫 27종, 대원, 스킨</span></li>
-      <li>Nemesis Hunt, Town Defense, Picnic Chase and Dig. <span class="ko">천적 사냥, 마을 방어전, 소풍 추격전, 굴 파기</span></li>
-      <li>Available in 14 languages. <span class="ko">14개 언어 지원</span></li>
-    </ul>
+    <div class="stage" aria-hidden="true">
+      <img class="float w1" src="assets/weapons/railgun.webp" alt="">
+      <img class="float w2" src="assets/weapons/comet.webp" alt="">
+      <img class="float w3" src="assets/weapons/water.webp" alt="">
+      <div class="hero-hero">
+        <img class="mascot" src="assets/chars/mascot_gun.webp" width="400" height="400" alt="">
+        <span class="shadow"></span>
+      </div>
+      <img class="buddy b1" src="assets/crew/toto.webp" alt="">
+      <img class="buddy b2" src="assets/pets/jackrabbit.webp" alt="">
+      <img class="buddy b3" src="assets/crew/dori.webp" alt="">
+    </div>
+    <div class="ground" aria-hidden="true"></div>
+    <a class="scroll-cue" href="#idle" aria-label="Scroll"><span></span></a>
   </section>
 
-  <section>
-    <h2>Support <span class="ko">· 고객 지원</span></h2>
-    <ul>
-      <li><a href="squirrel-sheriff-legal/support.html">Contact us · 문의하기</a> — <a href="mailto:acornlab.games@gmail.com">acornlab.games@gmail.com</a></li>
-      <li><a href="squirrel-sheriff-legal/privacy.html">Privacy Policy · 개인정보처리방침</a></li>
-      <li><a href="squirrel-sheriff-legal/delete.html">Delete your account &amp; data · 계정·데이터 삭제</a></li>
-    </ul>
+  <!-- PARADE -->
+  <section class="parade" aria-hidden="true">
+    <div class="track" id="trackA"></div>
+    <div class="track rev" id="trackB"></div>
   </section>
 
-  <footer>© 2026 Acorn Lab Games</footer>
+  <!-- FEATURE 1: idle -->
+  <section class="feat c-orange" id="idle">
+    <div class="feat-copy reveal">
+      <img class="feat-icon" src="assets/icons/sleep.webp" alt="" width="64" height="64">
+      <h2 data-t="idle">Leave it on. They fight.</h2>
+      <p data-t="idleBody"></p>
+    </div>
+    <div class="feat-art reveal">
+      <div class="phone tilt-l"><img data-shot="1" alt="" loading="lazy"></div>
+      <div class="counter"><img src="assets/icons/acorns.webp" alt="" width="44" height="44"><b id="acorns">0</b></div>
+      <span class="zzz" aria-hidden="true">z<i>z</i><i>z</i></span>
+    </div>
+  </section>
+
+  <!-- FEATURE 2: merge -->
+  <section class="feat c-blue flip">
+    <div class="feat-copy reveal">
+      <img class="feat-icon" src="assets/icons/weapon_box.webp" alt="" width="64" height="64">
+      <h2 data-t="merge">Pull &amp; merge weapons</h2>
+      <p data-t="mergeBody"></p>
+    </div>
+    <div class="feat-art reveal">
+      <div class="merge" id="merge" aria-hidden="true">
+        <div class="slot l"><img alt=""><em></em></div>
+        <div class="slot r"><img alt=""><em></em></div>
+        <div class="burst"></div>
+        <div class="slot out"><img alt=""><em></em></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURE 3: pets & crew -->
+  <section class="feat c-green">
+    <div class="feat-copy reveal">
+      <img class="feat-icon" src="assets/icons/pet.webp" alt="" width="64" height="64">
+      <h2 data-t="pets">Pets &amp; crew</h2>
+      <p data-t="petsBody"></p>
+    </div>
+    <div class="feat-art reveal">
+      <div class="ring" id="ring" aria-hidden="true">
+        <div class="ring-center"><img id="skin" src="assets/skins/hat_sheriff.webp" alt=""></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURE 4: adventures -->
+  <section class="feat c-pink flip">
+    <div class="feat-copy reveal">
+      <img class="feat-icon" src="assets/icons/picnic.webp" alt="" width="64" height="64">
+      <h2 data-t="adv">Adventures</h2>
+      <ul class="modes">
+        <li><img src="assets/icons/bounty.webp" alt=""><span data-mode="0"></span></li>
+        <li><img src="assets/icons/defense.webp" alt=""><span data-mode="1"></span></li>
+        <li><img src="assets/icons/picnic.webp" alt=""><span data-mode="2"></span></li>
+        <li><img src="assets/icons/dig.webp" alt=""><span data-mode="3"></span></li>
+      </ul>
+    </div>
+    <div class="feat-art reveal">
+      <div class="fan">
+        <div class="phone"><img data-shot="2" alt="" loading="lazy"></div>
+        <div class="phone"><img data-shot="3" alt="" loading="lazy"></div>
+        <div class="phone"><img data-shot="4" alt="" loading="lazy"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEO -->
+  <section class="video-sec">
+    <div class="rays slow" aria-hidden="true"></div>
+    <h2 class="big reveal" data-t="watch">See it in action</h2>
+    <div class="video-wrap reveal">
+      <div class="phone big-phone">
+        <video id="vid" muted loop playsinline preload="none"></video>
+        <button class="sound" id="sound" type="button" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 5V4L7 9H3Z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path class="mute" d="m16 9 6 6m0-6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span data-t="sound">Sound</span>
+        </button>
+        <button class="play" id="play" type="button" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button>
+      </div>
+      <img class="peek" src="assets/chars/mascot_pouch.webp" alt="" aria-hidden="true" loading="lazy">
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section class="gallery" aria-label="Screenshots">
+    <div class="strip" id="strip" tabindex="0"></div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <img class="village reveal" src="assets/bg/village.webp" alt="" width="640" height="640" loading="lazy">
+    <h2 class="big reveal" data-t="free">Free to play</h2>
+    <p class="cta-sub reveal">Android · iOS</p>
+    <div class="badges reveal" data-badges></div>
+  </section>
 </main>
+
+<footer class="foot">
+  <img src="assets/icon-192.png" width="56" height="56" alt="" loading="lazy">
+  <p class="foot-name" data-t="name">Squirrel Sheriff: Idle RPG</p>
+  <nav class="links">
+    <a data-t="support" href="squirrel-sheriff-legal/support.html">Support</a>
+    <a data-t="privacy" href="squirrel-sheriff-legal/privacy.html">Privacy</a>
+    <a data-t="refund" href="squirrel-sheriff-legal/refund.html">Refunds</a>
+    <a data-t="del" href="squirrel-sheriff-legal/delete.html">Delete account</a>
+  </nav>
+  <p class="mail"><span data-t="contact">Contact</span> · <a href="mailto:acornlab.games@gmail.com">acornlab.games@gmail.com</a></p>
+  <p class="copy">© 2026 Acorn Lab Games</p>
+</footer>
+
+<script src="i18n.js?v=2"></script>
+<script src="main.js?v=2"></script>
 </body>
 </html>
