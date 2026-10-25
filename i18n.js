@@ -16,6 +16,7 @@ window.I18N = {
   "adv": "Adventures",
   "modes": [
    "Nemesis Hunt",
+   "Bounty Boss",
    "Town Defense",
    "Picnic Chase",
    "Dig"
@@ -46,6 +47,7 @@ window.I18N = {
   "adv": "다양한 모험",
   "modes": [
    "천적 사냥",
+   "현상금 보스",
    "마을 방어전",
    "소풍 추격전",
    "굴 파기"
@@ -76,6 +78,7 @@ window.I18N = {
   "adv": "いろいろな冒険",
   "modes": [
    "天敵ハント",
+   "賞金ボス",
    "町の防衛戦",
    "ピクニック追跡戦",
    "穴掘り"
@@ -106,6 +109,7 @@ window.I18N = {
   "adv": "豐富的冒險",
   "modes": [
    "天敵狩獵",
+   "懸賞首領",
    "小鎮防衛戰",
    "野餐追擊戰",
    "挖洞"
@@ -136,6 +140,7 @@ window.I18N = {
   "adv": "丰富的冒险",
   "modes": [
    "天敌狩猎",
+   "悬赏首领",
    "小镇防卫战",
    "野餐追击战",
    "挖洞"
@@ -166,6 +171,7 @@ window.I18N = {
   "adv": "Abenteuer",
   "modes": [
    "Raubtierjagd",
+   "Kopfgeld-Boss",
    "Dorfverteidigung",
    "Picknick-Jagd",
    "Graben"
@@ -196,6 +202,7 @@ window.I18N = {
   "adv": "Aventures",
   "modes": [
    "Chasse au prédateur",
+   "Boss à prime",
    "Défense du village",
    "Course au pique-nique",
    "Fouille"
@@ -226,6 +233,7 @@ window.I18N = {
   "adv": "Aventuras",
   "modes": [
    "Caza del Depredador",
+   "Jefe Buscado",
    "Defensa del Pueblo",
    "Persecución del picnic",
    "Excavar"
@@ -256,6 +264,7 @@ window.I18N = {
   "adv": "Aventuras",
   "modes": [
    "Caça ao Predador",
+   "Chefe Procurado",
    "Defesa da Vila",
    "Perseguição do piquenique",
    "Escavar"
@@ -286,6 +295,7 @@ window.I18N = {
   "adv": "Приключения",
   "modes": [
    "Охота на хищника",
+   "Босс в розыске",
    "Оборона городка",
    "Погоня за пикником",
    "Раскопки"
@@ -316,6 +326,7 @@ window.I18N = {
   "adv": "Petualangan",
   "modes": [
    "Buru Musuh",
+   "Bos Buronan",
    "Pertahanan Kota",
    "Kejar Piknik",
    "Gali"
@@ -346,6 +357,7 @@ window.I18N = {
   "adv": "Pengembaraan",
   "modes": [
    "Buru Seteru",
+   "Bos Buruan",
    "Pertahanan Pekan",
    "Kejar Berkelah",
    "Gali"
@@ -376,6 +388,7 @@ window.I18N = {
   "adv": "การผจญภัย",
   "modes": [
    "ล่าคู่ปรับ",
+   "บอสค่าหัว",
    "ป้องกันเมือง",
    "ไล่ล่าปิกนิก",
    "ขุดโพรง"
@@ -406,6 +419,7 @@ window.I18N = {
   "adv": "Phiêu lưu",
   "modes": [
    "Săn thiên địch",
+   "Boss Truy Nã",
    "Thủ thành",
    "Rượt đuổi dã ngoại",
    "Đào hang"

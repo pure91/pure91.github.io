@@ -64,9 +64,9 @@ function apply(lang) {
   opts.forEach(o => o.setAttribute('aria-selected', String(o.dataset.lang === lang)));
   $$('[data-t]').forEach(el => { const v = vals[el.dataset.t]; if (v) el.textContent = v; });
   $$('[data-mode]').forEach(el => { el.textContent = t.modes[+el.dataset.mode]; });
-  $$('[data-shot]').forEach(el => { el.src = `assets/shots/${t.shots}/${el.dataset.shot}.webp`; });
-  $('#strip').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8]
-    .map(i => `<img src="assets/shots/${t.shots}/${i}.webp" alt="" loading="lazy" width="270" height="480">`).join('');
+  $$('[data-shot]').forEach(el => { el.src = `assets/shots/${t.shots}/${el.dataset.shot}.webp?v=2`; });
+  $('#strip').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    .map(i => `<img src="assets/shots/${t.shots}/${i}.webp?v=2" alt="" loading="lazy" width="270" height="480">`).join('');
   badges(t, lang);
   setVideo(lang);
   try { localStorage.setItem('lang', lang); } catch (e) {}
