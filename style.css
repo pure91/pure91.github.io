@@ -221,7 +221,8 @@ a.badge:hover { transform: translateY(-3px); }
 @keyframes cue { 60% { transform: translateY(14px); opacity: 0; } 100% { opacity: 0; } }
 
 /* ---------- parade ---------- */
-.parade { background: var(--brown); padding: 18px 0 26px; overflow: hidden; }
+/* the next section overlaps the bottom 40px, so more padding below keeps the pets visually centered */
+.parade { background: var(--brown); padding: 8px 0 44px; overflow: hidden; }
 .track { display: flex; width: max-content; animation: marquee 60s linear infinite; }
 .track.rev { animation-direction: reverse; animation-duration: 75s; margin-top: 4px; }
 .track img { width: 96px; height: 96px; margin: 0 10px; object-fit: contain; animation: hop 1.4s ease-in-out infinite; }
@@ -274,6 +275,11 @@ a.badge:hover { transform: translateY(-3px); }
   font-variant-numeric: tabular-nums;
 }
 .counter b { min-width: 4.2ch; }
+/* smaller counters: regular acorns and gems pile up too */
+.counter.mini { font-size: 22px; padding: 4px 14px 4px 6px; border-width: 3px; box-shadow: 0 4px 0 var(--ink); }
+.counter.mini b { min-width: 3.6ch; }
+.counter.c-gold { top: auto; bottom: 40%; right: max(0px, calc(50% - 270px)); rotate: -3deg; animation-delay: -.8s; }
+.counter.c-gem { top: auto; right: auto; bottom: 7%; left: max(0px, calc(50% - 250px)); rotate: 3deg; animation-delay: -1.6s; }
 .zzz {
   position: absolute; left: max(0px, calc(50% - 250px)); top: 6%;
   font-size: 64px; font-weight: 900; color: var(--cream);
@@ -456,6 +462,8 @@ a.badge:hover { transform: translateY(-3px); }
   .modes { justify-content: center; }
   .feat-art { min-height: 0; }
   .counter { right: 0; top: -4%; font-size: 22px; }
+  .counter.mini { font-size: 17px; }
+  .counter.mini img { width: 26px; height: 26px; }
   .zzz { left: 4px; top: -8%; font-size: 46px; }
   .video-sec { padding: 84px 16px 96px; border-radius: 32px 32px 0 0; }
   .peek { translate: -40% 0; width: 110px; bottom: -4%; }

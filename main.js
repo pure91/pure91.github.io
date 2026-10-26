@@ -212,20 +212,25 @@ if (!reduced) schedulePair();
 // preload weapons so swaps never flash
 WEAPONS.forEach(w => { new Image().src = `assets/weapons/${w}.webp`; });
 
-// ---- idle acorn counter ----
-const acornEl = $('#acorns');
+// ---- idle reward counters (golden acorns, acorns, gems) ----
+const acornEl = $('#acorns'), goldEl = $('#gold'), gemEl = $('#gems');
 const SUFFIX = ['', 'K', 'M', 'B', 'T', 'aa', 'ab', 'ac', 'ad'];
-let acorns = 120;
+let acorns = 120, gold = 80, gems = 12;
 function fmt(n) {
   let i = 0;
   while (n >= 1000 && i < SUFFIX.length - 1) { n /= 1000; i++; }
   return (i ? n.toFixed(n < 10 ? 2 : n < 100 ? 1 : 0) : Math.floor(n)) + SUFFIX[i];
 }
-acornEl.textContent = fmt(acorns);
+const showRewards = () => { acornEl.textContent = fmt(acorns); goldEl.textContent = fmt(gold); gemEl.textContent = fmt(gems); };
+showRewards();
 if (!reduced) setInterval(() => {
   acorns *= 1.09 + Math.random() * .05;
   if (acorns > 9.9e26) acorns = 120;
-  acornEl.textContent = fmt(acorns);
+  gold *= 1.06 + Math.random() * .04;
+  if (gold > 9.9e26) gold = 80;
+  if (Math.random() < .35) gems += 1 + (Math.random() * 3 | 0);
+  if (gems > 99999) gems = 12;
+  showRewards();
 }, 120);
 
 // ---- falling acorns in the hero sky ----
