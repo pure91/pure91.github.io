@@ -126,9 +126,10 @@ button { font: inherit; }
   max-width: 28ch;
 }
 .badges { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+/* icon + two lines sit centred as one group (on phones the button is wider than its content); the lines stay left-aligned like the official store badges */
 .badge {
-  position: relative; display: inline-flex; align-items: center; gap: 10px;
-  min-width: 178px; padding: 10px 18px 10px 14px;
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-width: 178px; padding: 10px 16px; text-align: left;
   background: #111; color: #fff; text-decoration: none;
   border-radius: 14px; border: 2px solid #111;
   box-shadow: 0 4px 0 rgba(0, 0, 0, .35);
@@ -247,6 +248,7 @@ a.badge:hover { transform: translateY(-3px); }
 .c-blue { background: linear-gradient(160deg, #6cb6ff, #2f72d0); }
 .c-green { background: linear-gradient(160deg, #8fd65e, #3f9a3c); }
 .c-pink { background: linear-gradient(160deg, #ff9cc0, #d9507f); }
+.c-red { background: linear-gradient(160deg, #f6825e, #a8322c); }
 .feat h2 { font-size: clamp(42px, 6.2vw, 96px); }
 .feat-copy p {
   margin: 22px 0 0; max-width: 30ch;
@@ -367,6 +369,14 @@ a.badge:hover { transform: translateY(-3px); }
 .fan .phone:nth-child(3) { transform: translateX(46%) rotate(12deg); }
 .fan:hover .phone:nth-child(1) { transform: translateX(-62%) rotate(-16deg); }
 .fan:hover .phone:nth-child(3) { transform: translateX(62%) rotate(16deg); }
+
+/* bounty boss: board (back) + battle (front), leaning apart */
+.duo { position: relative; width: min(520px, 90vw); height: min(580px, 124vw); }
+.duo .phone { position: absolute; top: 50%; width: min(270px, 56vw); translate: -50% -50%; transition: transform .5s var(--ease-pop); }
+.duo .phone:nth-child(1) { left: 36%; transform: translateY(-3%) rotate(-8deg); }
+.duo .phone:nth-child(2) { left: 64%; transform: translateY(4%) rotate(6deg); z-index: 2; }
+.duo:hover .phone:nth-child(1) { transform: translate(-8%, -3%) rotate(-11deg); }
+.duo:hover .phone:nth-child(2) { transform: translate(8%, 4%) rotate(9deg); }
 
 /* ---------- video ---------- */
 .video-sec {

@@ -5,7 +5,8 @@ const STORE = {
   ios: 'https://apps.apple.com/app/id6825570982',
 };
 
-const VIDEO_REV = 2; // bump when the clips are re-rendered
+const VIDEO_REV = 3; // bump when the clips are re-rendered (3: Korean = comic anchor ad)
+const SHOT_REV = 4, SHOT_COUNT = 10; // screenshots: bump SHOT_REV when they are retaken (4: weekly boss board added as 5)
 const VIDEO_LANGS = { ko: 'ko', ja: 'ja', 'zh-TW': 'zh_TW' }; // others fall back to English
 const FONTS = {
   ko: 'Jua', ja: 'M+PLUS+Rounded+1c:wght@800', 'zh-TW': 'Noto+Sans+TC:wght@900',
@@ -64,9 +65,10 @@ function apply(lang) {
   opts.forEach(o => o.setAttribute('aria-selected', String(o.dataset.lang === lang)));
   $$('[data-t]').forEach(el => { const v = vals[el.dataset.t]; if (v) el.textContent = v; });
   $$('[data-mode]').forEach(el => { el.textContent = t.modes[+el.dataset.mode]; });
-  $$('[data-shot]').forEach(el => { el.src = `assets/shots/${t.shots}/${el.dataset.shot}.webp?v=3`; });
-  $('#strip').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-    .map(i => `<img src="assets/shots/${t.shots}/${i}.webp?v=3" alt="" loading="lazy" width="270" height="480">`).join('');
+  $$('[data-chip]').forEach(el => { el.textContent = t.wbChips[+el.dataset.chip]; });
+  $$('[data-shot]').forEach(el => { el.src = `assets/shots/${t.shots}/${el.dataset.shot}.webp?v=${SHOT_REV}`; });
+  $('#strip').innerHTML = Array.from({ length: SHOT_COUNT }, (_, i) => i + 1)
+    .map(i => `<img src="assets/shots/${t.shots}/${i}.webp?v=${SHOT_REV}" alt="" loading="lazy" width="270" height="480">`).join('');
   badges(t, lang);
   setVideo(lang);
   try { localStorage.setItem('lang', lang); } catch (e) {}

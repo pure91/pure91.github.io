@@ -21,6 +21,13 @@ window.I18N = {
    "Picnic Chase",
    "Dig"
   ],
+  "wb": "Weekly Bounty Boss",
+  "wbBody": "The boss changes every week. The damage you deal in 60 seconds sets your rank, and every run chips away at a shared HP bar for rewards everyone gets.",
+  "wbChips": [
+   "Glowing weak spot +30%",
+   "Rage stages",
+   "Weekly rank titles"
+  ],
   "idle": "Leave it on. They fight.",
   "free": "Free to play",
   "soon": "Coming soon",
@@ -51,6 +58,13 @@ window.I18N = {
    "마을 방어전",
    "소풍 추격전",
    "굴 파기"
+  ],
+  "wb": "주간 현상금 보스",
+  "wbBody": "보스는 매주 바뀌어요. 60초 동안 넣은 피해로 순위를 겨루고, 모두의 판이 함께 공동 체력을 깎아 다 같이 공동 보상을 받아요.",
+  "wbChips": [
+   "빛나는 약점 +30%",
+   "분노 단계",
+   "주간 순위 칭호"
   ],
   "idle": "켜 두면, 알아서 싸워요",
   "free": "무료 플레이",
@@ -83,6 +97,13 @@ window.I18N = {
    "ピクニック追跡戦",
    "穴掘り"
   ],
+  "wb": "週間賞金ボス",
+  "wbBody": "ボスは毎週入れ替わります。60秒間に与えたダメージでランキングを競い、みんなの挑戦で共同HPを削って共同報酬をゲット！",
+  "wbChips": [
+   "光る弱点 +30%",
+   "怒り段階",
+   "週間ランキング称号"
+  ],
   "idle": "つけておくだけ、自動で戦う",
   "free": "基本プレイ無料",
   "soon": "近日公開",
@@ -113,6 +134,13 @@ window.I18N = {
    "小鎮防衛戰",
    "野餐追擊戰",
    "挖洞"
+  ],
+  "wb": "每週懸賞首領",
+  "wbBody": "首領每週輪替。用60秒內造成的傷害爭奪排名，每一場都一起削減共同血量，大家都能拿到共同獎勵！",
+  "wbChips": [
+   "發光弱點 +30%",
+   "憤怒階段",
+   "每週排名稱號"
   ],
   "idle": "開著就好，自動戰鬥",
   "free": "免費遊玩",
@@ -145,6 +173,13 @@ window.I18N = {
    "野餐追击战",
    "挖洞"
   ],
+  "wb": "每周悬赏首领",
+  "wbBody": "首领每周轮换。用60秒内造成的伤害争夺排名，每一局都一起削减共同血量，大家都能拿到共同奖励！",
+  "wbChips": [
+   "发光弱点 +30%",
+   "愤怒阶段",
+   "每周排名称号"
+  ],
   "idle": "开着就好，自动战斗",
   "free": "免费游玩",
   "soon": "即将推出",
@@ -175,6 +210,13 @@ window.I18N = {
    "Dorfverteidigung",
    "Picknick-Jagd",
    "Graben"
+  ],
+  "wb": "Kopfgeld-Boss der Woche",
+  "wbBody": "Der Boss wechselt jede Woche. Dein Schaden in 60 Sekunden zählt für die Rangliste – und jeder Lauf senkt die Gemeinschafts-LP für Belohnungen, die alle bekommen.",
+  "wbChips": [
+   "Leuchtende Schwachstelle +30 %",
+   "Wutstufen",
+   "Wöchentliche Rangtitel"
   ],
   "idle": "Einfach laufen lassen.",
   "free": "Kostenlos spielen",
@@ -207,6 +249,13 @@ window.I18N = {
    "Course au pique-nique",
    "Fouille"
   ],
+  "wb": "Boss à prime de la semaine",
+  "wbBody": "Le boss change chaque semaine. Vos dégâts en 60 secondes comptent pour le classement, et chaque manche réduit les PV communs pour des récompenses partagées.",
+  "wbChips": [
+   "Point faible lumineux +30 %",
+   "Niveaux de rage",
+   "Titres de la semaine"
+  ],
   "idle": "Laissez tourner. Ils se battent.",
   "free": "Gratuit",
   "soon": "Bientôt disponible",
@@ -237,6 +286,13 @@ window.I18N = {
    "Defensa del Pueblo",
    "Persecución del picnic",
    "Excavar"
+  ],
+  "wb": "Jefe Buscado semanal",
+  "wbBody": "El jefe cambia cada semana. Tu daño en 60 segundos cuenta para el ranking, y cada ronda reduce la vida compartida para recompensas para todos.",
+  "wbChips": [
+   "Punto débil brillante +30%",
+   "Niveles de furia",
+   "Títulos semanales"
   ],
   "idle": "Déjalo encendido. Ellos luchan.",
   "free": "Gratis",
@@ -269,6 +325,13 @@ window.I18N = {
    "Perseguição do piquenique",
    "Escavar"
   ],
+  "wb": "Chefe Procurado semanal",
+  "wbBody": "O chefe muda toda semana. Seu dano em 60 segundos vale para o ranking, e cada rodada reduz a vida compartilhada para recompensas de todos.",
+  "wbChips": [
+   "Ponto fraco brilhante +30%",
+   "Níveis de fúria",
+   "Títulos semanais"
+  ],
   "idle": "Deixe ligado. Eles lutam.",
   "free": "Grátis para jogar",
   "soon": "Em breve",
@@ -299,6 +362,13 @@ window.I18N = {
    "Оборона городка",
    "Погоня за пикником",
    "Раскопки"
+  ],
+  "wb": "Босс в розыске недели",
+  "wbBody": "Босс меняется каждую неделю. Урон за 60 секунд идёт в рейтинг, а каждый забег уменьшает общее здоровье ради наград для всех.",
+  "wbChips": [
+   "Слабое место +30%",
+   "Стадии ярости",
+   "Недельные титулы"
   ],
   "idle": "Включите — они сражаются сами.",
   "free": "Бесплатно",
@@ -331,6 +401,13 @@ window.I18N = {
    "Kejar Piknik",
    "Gali"
   ],
+  "wb": "Bos Buronan Mingguan",
+  "wbBody": "Bos berganti setiap minggu. Damage-mu dalam 60 detik menentukan peringkat, dan setiap ronde mengurangi HP bersama untuk hadiah semua pemain.",
+  "wbChips": [
+   "Titik lemah bersinar +30%",
+   "Tahap marah",
+   "Gelar peringkat mingguan"
+  ],
   "idle": "Biarkan menyala. Mereka bertarung.",
   "free": "Gratis dimainkan",
   "soon": "Segera hadir",
@@ -361,6 +438,13 @@ window.I18N = {
    "Pertahanan Pekan",
    "Kejar Berkelah",
    "Gali"
+  ],
+  "wb": "Bos Buruan Mingguan",
+  "wbBody": "Bos bertukar setiap minggu. Kerosakan anda dalam 60 saat menentukan kedudukan, dan setiap pusingan mengurangkan HP bersama untuk ganjaran semua pemain.",
+  "wbChips": [
+   "Titik lemah bercahaya +30%",
+   "Tahap marah",
+   "Gelaran mingguan"
   ],
   "idle": "Biarkan ia berjalan. Mereka berlawan.",
   "free": "Percuma dimainkan",
@@ -393,6 +477,13 @@ window.I18N = {
    "ไล่ล่าปิกนิก",
    "ขุดโพรง"
   ],
+  "wb": "บอสค่าหัวประจำสัปดาห์",
+  "wbBody": "บอสเปลี่ยนทุกสัปดาห์ ดาเมจใน 60 วินาทีใช้จัดอันดับ และทุกรอบช่วยกันลด HP ร่วมเพื่อรับรางวัลร่วมกัน",
+  "wbChips": [
+   "จุดอ่อนเรืองแสง +30%",
+   "ขั้นความโกรธ",
+   "ฉายาอันดับประจำสัปดาห์"
+  ],
   "idle": "เปิดทิ้งไว้ สู้ให้เอง",
   "free": "เล่นฟรี",
   "soon": "เร็ว ๆ นี้",
@@ -423,6 +514,13 @@ window.I18N = {
    "Thủ thành",
    "Rượt đuổi dã ngoại",
    "Đào hang"
+  ],
+  "wb": "Boss Truy Nã hằng tuần",
+  "wbBody": "Boss thay đổi mỗi tuần. Sát thương trong 60 giây quyết định thứ hạng, và mỗi lượt đều cùng trừ máu chung để mọi người nhận thưởng.",
+  "wbChips": [
+   "Điểm yếu phát sáng +30%",
+   "Cấp nổi giận",
+   "Danh hiệu xếp hạng tuần"
   ],
   "idle": "Cứ bật lên, tự chiến đấu.",
   "free": "Chơi miễn phí",
