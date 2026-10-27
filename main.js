@@ -55,7 +55,7 @@ function loadFont(lang) {
 function apply(lang) {
   const t = I18N[lang];
   const [t1, ...rest] = t.name.split(/\s*[:：]\s*/);
-  const vals = Object.assign({}, t, { title1: t1, title2: rest.join(' ') });
+  const vals = Object.assign({}, t, { title1: t1, title2: t.pill || rest.join(' ') });  // pill: badge text when it differs from the store name (ko drops the repeated 보안관)
   document.documentElement.lang = lang;
   document.title = t.name;
   $('meta[name=description]').content = t.promo;
