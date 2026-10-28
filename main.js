@@ -5,7 +5,7 @@ const STORE = {
   ios: 'https://apps.apple.com/app/id6825570982',
 };
 
-const VIDEO_REV = 4; // bump when the clips are re-rendered (4: Korean = sticker anchor ad, wide layout)
+const VIDEO_REV = 5; // bump when the clips are re-rendered (5: en/ja/zh-TW = sticker anchor ad too)
 const SHOT_REV = 4, SHOT_COUNT = 10; // screenshots: bump SHOT_REV when they are retaken (4: weekly boss board added as 5)
 const VIDEO_LANGS = { ko: 'ko', ja: 'ja', 'zh-TW': 'zh_TW' }; // others fall back to English
 const FONTS = {
