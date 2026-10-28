@@ -12,6 +12,10 @@ const FONTS = {
   ko: 'Jua', ja: 'M+PLUS+Rounded+1c:wght@800', 'zh-TW': 'Noto+Sans+TC:wght@900',
   'zh-CN': 'Noto+Sans+SC:wght@900', th: 'Mitr:wght@600',
 };
+// Always open at the top: browsers restore the old scroll spot on reload, which landed mid-page (links with # still work)
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+const toTop = () => { if (!location.hash) scrollTo({ top: 0, behavior: 'instant' }); };
+toTop(); addEventListener('load', toTop); addEventListener('pageshow', e => { if (e.persisted) toTop(); });
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
