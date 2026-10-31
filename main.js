@@ -6,7 +6,7 @@ const STORE = {
 };
 
 const VIDEO_REV = 5; // bump when the clips are re-rendered (5: en/ja/zh-TW = sticker anchor ad too)
-const SHOT_REV = 4, SHOT_COUNT = 10; // screenshots: bump SHOT_REV when they are retaken (4: weekly boss board added as 5)
+const SHOT_REV = 5, SHOT_COUNT = 11; // screenshots: bump SHOT_REV when they are retaken (5: 10-31 game — sky tree, race, treasure tree; board 10, codex 11)
 const VIDEO_LANGS = { ko: 'ko', ja: 'ja', 'zh-TW': 'zh_TW' }; // others fall back to English
 const FONTS = {
   ko: 'Jua', ja: 'M+PLUS+Rounded+1c:wght@800', 'zh-TW': 'Noto+Sans+TC:wght@900',
