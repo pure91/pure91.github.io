@@ -5,7 +5,7 @@ const STORE = {
   ios: 'https://apps.apple.com/app/id6825570982',
 };
 
-const VIDEO_REV = 5; // bump when the clips are re-rendered (5: en/ja/zh-TW = sticker anchor ad too)
+const VIDEO_REV = 6; // bump when the clips are re-rendered (5: en/ja/zh-TW = sticker anchor ad too, 6: anchor ad 2 sticker = new content)
 const SHOT_REV = 5, SHOT_COUNT = 11; // screenshots: bump SHOT_REV when they are retaken (5: 10-31 game — sky tree, race, treasure tree; board 10, codex 11)
 const VIDEO_LANGS = { ko: 'ko', ja: 'ja', 'zh-TW': 'zh_TW' }; // others fall back to English
 const FONTS = {
