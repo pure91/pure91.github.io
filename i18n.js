@@ -38,6 +38,7 @@ window.I18N = {
   "privacy": "Privacy",
   "support": "Support",
   "refund": "Refunds",
+  "terms": "Terms of Service",
   "del": "Delete account",
   "contact": "Contact"
  },
@@ -79,6 +80,7 @@ window.I18N = {
   "privacy": "개인정보처리방침",
   "support": "고객 지원",
   "refund": "환불 안내",
+  "terms": "이용약관",
   "del": "계정 삭제",
   "contact": "문의"
  },
@@ -119,6 +121,7 @@ window.I18N = {
   "privacy": "プライバシー",
   "support": "サポート",
   "refund": "返金について",
+  "terms": "利用規約",
   "del": "アカウント削除",
   "contact": "お問い合わせ"
  },
@@ -159,6 +162,7 @@ window.I18N = {
   "privacy": "隱私權政策",
   "support": "客服支援",
   "refund": "退款說明",
+  "terms": "服務條款",
   "del": "刪除帳號",
   "contact": "聯絡我們"
  },
@@ -199,6 +203,7 @@ window.I18N = {
   "privacy": "隐私政策",
   "support": "客服支持",
   "refund": "退款说明",
+  "terms": "服务条款",
   "del": "删除账号",
   "contact": "联系我们"
  },
@@ -239,6 +244,7 @@ window.I18N = {
   "privacy": "Datenschutz",
   "support": "Support",
   "refund": "Erstattungen",
+  "terms": "Nutzungsbedingungen",
   "del": "Konto löschen",
   "contact": "Kontakt"
  },
@@ -279,6 +285,7 @@ window.I18N = {
   "privacy": "Confidentialité",
   "support": "Assistance",
   "refund": "Remboursements",
+  "terms": "Conditions d'utilisation",
   "del": "Supprimer le compte",
   "contact": "Contact"
  },
@@ -319,6 +326,7 @@ window.I18N = {
   "privacy": "Privacidad",
   "support": "Soporte",
   "refund": "Reembolsos",
+  "terms": "Términos del servicio",
   "del": "Eliminar cuenta",
   "contact": "Contacto"
  },
@@ -359,6 +367,7 @@ window.I18N = {
   "privacy": "Privacidade",
   "support": "Suporte",
   "refund": "Reembolsos",
+  "terms": "Termos de Serviço",
   "del": "Excluir conta",
   "contact": "Contato"
  },
@@ -399,6 +408,7 @@ window.I18N = {
   "privacy": "Конфиденциальность",
   "support": "Поддержка",
   "refund": "Возвраты",
+  "terms": "Условия использования",
   "del": "Удалить аккаунт",
   "contact": "Связаться"
  },
@@ -439,6 +449,7 @@ window.I18N = {
   "privacy": "Privasi",
   "support": "Dukungan",
   "refund": "Pengembalian dana",
+  "terms": "Ketentuan Layanan",
   "del": "Hapus akun",
   "contact": "Kontak"
  },
@@ -479,6 +490,7 @@ window.I18N = {
   "privacy": "Privasi",
   "support": "Sokongan",
   "refund": "Bayaran balik",
+  "terms": "Terma Perkhidmatan",
   "del": "Padam akaun",
   "contact": "Hubungi"
  },
@@ -519,6 +531,7 @@ window.I18N = {
   "privacy": "ความเป็นส่วนตัว",
   "support": "ฝ่ายสนับสนุน",
   "refund": "การคืนเงิน",
+  "terms": "ข้อกำหนดการใช้งาน",
   "del": "ลบบัญชี",
   "contact": "ติดต่อ"
  },
@@ -559,6 +572,7 @@ window.I18N = {
   "privacy": "Quyền riêng tư",
   "support": "Hỗ trợ",
   "refund": "Hoàn tiền",
+  "terms": "Điều khoản dịch vụ",
   "del": "Xóa tài khoản",
   "contact": "Liên hệ"
  }
