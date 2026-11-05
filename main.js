@@ -5,9 +5,9 @@ const STORE = {
   ios: 'https://apps.apple.com/app/id6825570982',
 };
 
-const VIDEO_REV = 6; // bump when the clips are re-rendered (5: en/ja/zh-TW = sticker anchor ad too, 6: anchor ad 2 sticker = new content)
+const VIDEO_REV = 7; // bump when the clips are re-rendered (5: en/ja/zh-TW = sticker anchor ad too, 6: anchor ad 2 sticker = new content, 7: pantry tower ad, all 14 languages)
 const SHOT_REV = 6, SHOT_COUNT = 9; // screenshots: bump SHOT_REV when they are retaken (6: 11-04 comic-band store set, same 9 as the stores)
-const VIDEO_LANGS = { ko: 'ko', ja: 'ja', 'zh-TW': 'zh_TW' }; // others fall back to English
+const VIDEO_LANGS = { ko: 'ko', ja: 'ja', 'zh-TW': 'zh_TW', 'zh-CN': 'zh_CN', de: 'de', fr: 'fr', es: 'es', 'pt-BR': 'pt_BR', ru: 'ru', id: 'id', ms: 'ms', th: 'th', vi: 'vi' }; // others fall back to English
 const FONTS = {
   ko: 'Jua', ja: 'M+PLUS+Rounded+1c:wght@800', 'zh-TW': 'Noto+Sans+TC:wght@900',
   'zh-CN': 'Noto+Sans+SC:wght@900', th: 'Mitr:wght@600',
