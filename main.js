@@ -1,6 +1,6 @@
-// ---- Store links: flip `live` to true on launch day and the badges become real links. ----
+// ---- Store links: flip a store's `live` to true the day it goes public and its badge becomes a real link. ----
 const STORE = {
-  live: false,
+  live: { play: false, ios: true },  // ios: public on the App Store since 2026-11-06
   play: 'https://play.google.com/store/apps/details?id=com.squirrelsheriff.idle',
   ios: 'https://apps.apple.com/app/id6825570982',
 };
@@ -40,10 +40,10 @@ const ICON_APPLE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff
 
 function badges(t, lang) {
   const hl = lang.replace('-', '_');
-  const b = (href, icon, small, name) => STORE.live
+  const b = (live, href, icon, small, name) => live
     ? `<a class="badge" href="${href}" target="_blank" rel="noopener">${icon}<span><small>${small}</small><b>${name}</b></span></a>`
     : `<span class="badge off">${icon}<span><small>${small}</small><b>${name}</b></span><span class="soon">${t.soon}</span></span>`;
-  const html = b(`${STORE.play}&hl=${hl}`, ICON_PLAY, 'GET IT ON', 'Google Play') + b(STORE.ios, ICON_APPLE, 'Download on the', 'App Store');
+  const html = b(STORE.live.play, `${STORE.play}&hl=${hl}`, ICON_PLAY, 'GET IT ON', 'Google Play') + b(STORE.live.ios, STORE.ios, ICON_APPLE, 'Download on the', 'App Store');
   $$('[data-badges]').forEach(el => { el.innerHTML = html; });
 }
 
