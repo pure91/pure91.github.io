@@ -3,6 +3,8 @@ const STORE = {
   live: { play: false, ios: true },  // ios: public on the App Store since 2026-11-06
   play: 'https://play.google.com/store/apps/details?id=com.squirrelsheriff.idle',
   ios: 'https://apps.apple.com/app/id6825570982',
+  // App Store country per site language: the plain link opened the US store on a computer, also from the Korean page (user 11-07). No zh-CN: not sold in China.
+  iosFront: { ko: 'kr', ja: 'jp', 'zh-TW': 'tw', de: 'de', fr: 'fr', es: 'es', 'pt-BR': 'br', ru: 'ru', id: 'id', ms: 'my', th: 'th', vi: 'vn' },
 };
 
 const VIDEO_REV = 8; // bump when the clips are re-rendered (5: en/ja/zh-TW = sticker anchor ad too, 6: anchor ad 2 sticker = new content, 7: pantry tower ad, all 14 languages, 8: same picture, new music)
@@ -43,7 +45,7 @@ function badges(t, lang) {
   const b = (live, href, icon, small, name) => live
     ? `<a class="badge" href="${href}" target="_blank" rel="noopener">${icon}<span><small>${small}</small><b>${name}</b></span></a>`
     : `<span class="badge off">${icon}<span><small>${small}</small><b>${name}</b></span><span class="soon">${t.soon}</span></span>`;
-  const html = b(STORE.live.play, `${STORE.play}&hl=${hl}`, ICON_PLAY, 'GET IT ON', 'Google Play') + b(STORE.live.ios, STORE.ios, ICON_APPLE, 'Download on the', 'App Store');
+  const html = b(STORE.live.play, `${STORE.play}&hl=${hl}`, ICON_PLAY, 'GET IT ON', 'Google Play') + b(STORE.live.ios, STORE.iosFront[lang] ? STORE.ios.replace('.com/', `.com/${STORE.iosFront[lang]}/`) : STORE.ios, ICON_APPLE, 'Download on the', 'App Store');
   $$('[data-badges]').forEach(el => { el.innerHTML = html; });
 }
 
