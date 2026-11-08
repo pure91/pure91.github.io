@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<title>운영 숫자</title>
+<!--
+  다람쥐 키우기 운영 대시보드 (사용자 11-08 '제가 간단히 볼 수 있는 대시보드가 있으면해요').
+  이 페이지에는 비밀이 없다: 접근 코드(공개용 키~대시보드 코드)는 각 기기에서 한 번 넣으면 그 브라우저에만 남는다.
+  서버 함수 dash_stats(코드)는 합계 숫자만 돌려주고 아무것도 바꾸지 않는다 (supabase/migrations/20261108000023_power_gate_dashboard.sql).
+  서버는 60초에 한 번만 다시 계산하므로 자주 새로 고쳐도 게임 서버에 부담이 없다.
+-->
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f4f3ef;
+  --surface: #fcfcfb;
+  --line: #e4e2dc;
+  --grid: #ecebe6;
+  --text: #0b0b0b;
+  --text-2: #52514e;
+  --text-3: #7a7974;
+  --accent: #2a78d6;
+  --accent-soft: #d8e6f8;
+  --bad: #c03a2b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --line: #2c2c2a;
+    --grid: #262624;
+    --text: #f0efec;
+    --text-2: #c3c2b7;
+    --text-3: #8f8e86;
+    --accent: #3987e5;
+    --accent-soft: #23364d;
+    --bad: #e66767;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --line: #2c2c2a;
+  --grid: #262624;
+  --text: #f0efec;
+  --text-2: #c3c2b7;
+  --text-3: #8f8e86;
+  --accent: #3987e5;
+  --accent-soft: #23364d;
+  --bad: #e66767;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 760px; margin: 0 auto; padding: 16px 16px 40px; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+h1 { font-size: 20px; margin: 0; }
+.sub { color: var(--text-3); font-size: 13px; }
+button {
+  font: inherit; font-size: 14px; color: var(--text); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+.card h2 { font-size: 15px; margin: 0 0 10px; }
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
+@media (min-width: 620px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.tile .k { color: var(--text-2); font-size: 13px; }
+.tile .v { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.tile .n { color: var(--text-3); font-size: 12px; margin-top: 2px; }
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.tip {
+  position: absolute; pointer-events: none; background: var(--text); color: var(--bg);
+  font-size: 12px; padding: 6px 9px; border-radius: 8px; white-space: nowrap; transform: translate(-50%, -100%);
+  opacity: 0; transition: opacity .12s;
+}
+.tbl-wrap { overflow-x: auto; margin: 0 -4px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+th, td { text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+th { color: var(--text-2); font-weight: 600; }
+td.zero { color: var(--text-3); }
+.hbar { display: grid; grid-template-columns: 70px 1fr 36px; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
+.hbar .track { height: 12px; }
+.hbar .fill { height: 12px; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px; }
+.hbar .c { text-align: right; font-variant-numeric: tabular-nums; }
+.order { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: 13px; }
+.order:last-child { border-bottom: 0; }
+.order .p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.muted { color: var(--text-3); font-size: 12px; }
+.err { color: var(--bad); font-size: 14px; margin: 8px 0 0; }
+input[type=password], input[type=text] {
+  width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text); margin: 8px 0 10px;
+}
+.notes { color: var(--text-3); font-size: 12px; line-height: 1.6; margin-top: 18px; }
+.notes p { margin: 4px 0; }
+.hide { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>운영 숫자</h1>
+      <div class="sub" id="at">다람쥐 키우기</div>
+    </div>
+    <button id="reload" class="hide" type="button">새로 보기</button>
+  </header>
+
+  <div id="login" class="card hide">
+    <h2>접근 코드</h2>
+    <div class="muted">PC 의 build/dashboard_code.txt 에 있는 한 줄을 붙여 넣으세요. 이 기기의 브라우저에만 저장됩니다.</div>
+    <input id="code" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="접근 코드">
+    <button id="save" class="primary" type="button">보기</button>
+    <div id="loginErr" class="err hide"></div>
+  </div>
+
+  <div id="main" class="hide">
+    <div class="tiles" id="tiles"></div>
+
+    <div class="card">
+      <h2>하루 새 플레이어 (최근 14일)</h2>
+      <div class="chart" id="chart"><div class="tip" id="tip"></div></div>
+      <div class="muted">플레이어 = 첫 보스(1-1)를 잡은 계정. 막대를 누르면 그날 숫자가 보입니다.</div>
+    </div>
+
+    <div class="card">
+      <h2>날짜별</h2>
+      <div class="tbl-wrap"><table id="days"></table></div>
+      <div class="muted">돌아옴 = 그날 가입하지 않고 다시 들어온 계정 (11-06 부터 셈). 표는 옆으로 밀어 볼 수 있어요.</div>
+    </div>
+
+    <div class="card">
+      <h2>플레이어 진행도 (최고 스테이지)</h2>
+      <div id="stages"></div>
+    </div>
+
+    <div class="card">
+      <h2>최근 결제</h2>
+      <div id="orders"></div>
+    </div>
+
+    <div class="notes">
+      <p>읽기만 하는 페이지입니다. 서버는 합계 숫자만 돌려주고 아무것도 바꾸지 않으며, 60초에 한 번만 다시 셉니다.</p>
+      <p>매출은 정가(원)로 센 추정치입니다. 실제 정산·환율·수수료는 App Store Connect · Play Console 에서 봅니다.</p>
+      <p>나라별 다운로드는 서버에 없어서 App Store Connect 분석 · Play Console 통계에서 봅니다.</p>
+      <p>개발 계정 · PC 녹화 · 도구 계정은 빼고 셉니다. '바로 나감'에는 구글 출시 전 자동 테스트 기기도 들어 있습니다.</p>
+      <p><button id="forget" type="button">이 기기에서 코드 지우기</button></p>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const URL_RPC = "https://ptygspcyueotglxzulql.supabase.co/rest/v1/rpc/dash_stats";
+  const STORE = "acorn_ops_code";
+  const NAMES = {
+    monthly_card: "월간 카드", ad_free: "광고 제거 + 볼주머니", pass_vip: "VIP 패스", auto_harvest: "알뜰 수확 패키지",
+    auto_pkg: "부지런한 다람쥐 패키지", buff_pkg: "영원한 부스터 패키지", dig_auto_pkg: "두더지 친구 고용 패키지",
+    acorn_basket: "황금 도토리 바구니", acorn_sack: "황금 도토리 자루", gems_1: "보석 한 줌", gems_2: "보석 주머니",
+    gems_3: "보석 상자", gems_4: "보석 금고", gems_5: "보석 마차", weekly_w1: "주간 상품 (무기 1)", weekly_w2: "주간 상품 (무기 2)",
+    weekly_p1: "주간 상품 (펫)", vip_time: "VIP 시간", vip_reward: "VIP 보상", vip_convenience: "VIP 편의"
+  };
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => Number(n || 0).toLocaleString("ko-KR");
+  const won = (n) => fmt(n) + "원";
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const product = (id) => NAMES[id] || (/^stepup_weapon_(\d)$/.test(id) ? "무기 단계 상품 " + id.slice(-1)
+    : /^stepup_pet_(\d)$/.test(id) ? "펫 단계 상품 " + id.slice(-1) : id);
+
+  function getCode() { try { return localStorage.getItem(STORE) || ""; } catch (e) { return ""; } }
+  function setCode(v) { try { v ? localStorage.setItem(STORE, v) : localStorage.removeItem(STORE); } catch (e) {} }
+
+  let memCode = "";
+  function showLogin(msg) {
+    $("main").classList.add("hide"); $("reload").classList.add("hide"); $("login").classList.remove("hide");
+    $("loginErr").textContent = msg || ""; $("loginErr").classList.toggle("hide", !msg);
+  }
+
+  async function load() {
+    const code = memCode || getCode();
+    const i = code.indexOf("~");
+    if (i < 1) { showLogin(); return; }
+    const key = code.slice(0, i), tok = code.slice(i + 1);
+    $("at").textContent = "불러오는 중…";
+    let data;
+    try {
+      const r = await fetch(URL_RPC, {
+        method: "POST",
+        headers: Object.assign({ apikey: key, "Content-Type": "application/json" },
+          key.startsWith("eyJ") ? { Authorization: "Bearer " + key } : {}),
+        body: JSON.stringify({ p_code: tok })
+      });
+      data = await r.json();
+      if (r.status === 401 || r.status === 403) data = { ok: false };      // 공개용 키가 틀림 = 코드가 틀림
+      else if (!r.ok) throw new Error((data && data.message) || ("HTTP " + r.status));
+    } catch (e) {
+      $("at").textContent = "불러오지 못했어요: " + e.message;
+      if (!$("main").classList.contains("hide")) return;
+      showLogin("서버에 닿지 못했어요. 잠시 뒤 다시 해 보세요."); return;
+    }
+    if (!data || data.ok !== true) { setCode(""); memCode = ""; showLogin("코드가 맞지 않아요."); return; }
+    $("login").classList.add("hide"); $("main").classList.remove("hide"); $("reload").classList.remove("hide");
+    render(data);
+  }
+
+  function tile(k, v, n) {
+    return '<div class="tile"><div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div>' +
+      (n ? '<div class="n">' + esc(n) + '</div>' : "") + "</div>";
+  }
+
+  let lastDays = [];
+  function render(d) {
+    lastDays = d.days || [];
+    $("at").textContent = d.at + " 기준 (한국 시간)";
+    const days = d.days || [];
+    const today = days[days.length - 1] || {};
+    const back = d.old_enough ? Math.round(100 * d.came_back / d.old_enough) : 0;
+    $("tiles").innerHTML =
+      tile("플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android)) +
+      tile("오늘 새 플레이어", fmt(today.players), "바로 나감 " + fmt(today.bounces)) +
+      tile("최근 7일 접속", fmt(d.active_7d), "다음 날 이후 다시 옴 " + fmt(d.came_back) + "명 (" + back + "%)") +
+      tile("매출 (정가 기준)", won(d.krw_total), "결제 " + fmt(d.orders_total) + "건 · 오늘 " + won(today.krw)) +
+      tile("최고 스테이지", fmt(d.top_stage), "") +
+      tile("바로 나감", fmt(d.bounces), "1-1 전에 나간 설치 (자동 테스트 포함)");
+    drawChart(days);
+    let h = "<tr><th>날짜</th><th>새 플레이어</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>매출</th><th>주간 보스</th></tr>";
+    for (const r of days.slice().reverse()) {
+      const c = (v, s) => '<td class="' + (v ? "" : "zero") + '">' + (s === undefined ? fmt(v) : s) + "</td>";
+      h += "<tr><td>" + esc(r.d) + "</td>" + c(r.players) + c(r.bounces) + c(r.returning) + c(r.orders) +
+        c(r.krw, r.krw ? won(r.krw) : "0") + c(r.wb) + "</tr>";
+    }
+    $("days").innerHTML = h;
+    const sb = d.stage_buckets || {};
+    const keys = ["1-9", "10-49", "50-199", "200-999", "1000+"];
+    const mx = Math.max(1, ...keys.map((k) => sb[k] || 0));
+    $("stages").innerHTML = keys.map((k) =>
+      '<div class="hbar"><span>' + k + '</span><div class="track"><div class="fill" style="width:' +
+      (100 * (sb[k] || 0) / mx) + '%' + (sb[k] ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(sb[k]) + "</span></div>").join("");
+    const os = d.recent_orders || [];
+    $("orders").innerHTML = os.length ? os.map((o) =>
+      '<div class="order"><span class="p">' + esc(o.at) + " · " + esc(product(o.product)) + " · " + (o.platform === "ios" ? "iOS" : "Android") +
+      (o.refunded ? " · 환불" : "") + "</span><span>" + won(o.krw) + "</span></div>").join("")
+      : '<div class="muted">아직 없어요.</div>';
+    if (d.test_orders_total) $("orders").innerHTML += '<div class="muted" style="margin-top:6px">테스트 결제 ' + fmt(d.test_orders_total) + "건은 빼고 셈</div>";
+  }
+
+  function drawChart(days) {
+    const box = $("chart"), tip = $("tip");
+    box.querySelectorAll("svg").forEach((s) => s.remove());
+    const W = Math.max(280, Math.round(box.clientWidth || 640)), H = 190, L = 26, R = 4, T = 16, B = 24;      // 실제 픽셀 크기로 그려 글씨가 작아지지 않게
+    const n = days.length || 1, max = Math.max(4, ...days.map((r) => r.players || 0));
+    const step = Math.ceil(max / 4), top = step * 4;
+    const bw = (W - L - R) / n, gap = 2, y = (v) => T + (H - T - B) * (1 - v / top);
+    let s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="최근 14일 하루 새 플레이어 수">';
+    for (let g = 0; g <= 4; g++) {
+      const v = step * g, yy = y(v);
+      s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '" stroke="var(--grid)" stroke-width="1"/>';
+      s += '<text x="' + (L - 6) + '" y="' + (yy + 4) + '" text-anchor="end" font-size="11" fill="var(--text-3)">' + v + "</text>";
+    }
+    const best = days.reduce((a, r, i) => (r.players > (days[a] || {}).players ? i : a), 0);
+    days.forEach((r, i) => {
+      const x = L + i * bw + gap / 2, w = Math.max(2, bw - gap), v = r.players || 0, yy = y(v), h = H - B - yy;
+      if (v > 0) {
+        const rr = Math.min(4, w / 2, h);
+        s += '<path d="M' + x + "," + (H - B) + "V" + (yy + rr) + "Q" + x + "," + yy + " " + (x + rr) + "," + yy +
+          "H" + (x + w - rr) + "Q" + (x + w) + "," + yy + " " + (x + w) + "," + (yy + rr) + "V" + (H - B) + 'Z" fill="var(--accent)"/>';
+      }
+      if ((i === best && v > 0) || i === n - 1) {
+        s += '<text x="' + (x + w / 2) + '" y="' + (yy - 4) + '" text-anchor="middle" font-size="11" fill="var(--text-2)">' + v + "</text>";
+      }
+      if (i % 2 === (n - 1) % 2) {
+        s += '<text x="' + (x + w / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="var(--text-3)">' + esc(r.d.slice(3)) + "</text>";
+      }
+      s += '<rect data-i="' + i + '" x="' + (L + i * bw) + '" y="' + T + '" width="' + bw + '" height="' + (H - T - B) + '" fill="transparent"/>';
+    });
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + (H - B) + '" y2="' + (H - B) + '" stroke="var(--line)" stroke-width="1"/></svg>';
+    box.insertAdjacentHTML("afterbegin", s);
+    const svg = box.querySelector("svg");
+    const show = (ev) => {
+      const t = ev.target.closest("rect[data-i]");
+      if (!t) { tip.style.opacity = 0; return; }
+      const r = days[+t.dataset.i], bb = t.getBoundingClientRect(), cb = box.getBoundingClientRect();
+      tip.innerHTML = esc(r.d) + " · 새 플레이어 " + fmt(r.players) + "<br>바로 나감 " + fmt(r.bounces) + " · 매출 " + won(r.krw);
+      tip.style.left = Math.min(Math.max(bb.left - cb.left + bb.width / 2, 70), cb.width - 70) + "px";
+      tip.style.top = (y(r.players || 0) / H * cb.height - 6) + "px";
+      tip.style.opacity = 1;
+    };
+    svg.addEventListener("pointermove", show);
+    svg.addEventListener("pointerdown", show);
+    svg.addEventListener("pointerleave", () => { tip.style.opacity = 0; });
+  }
+
+  $("save").addEventListener("click", () => {
+    const v = $("code").value.trim();
+    if (!v.includes("~")) { showLogin("코드 모양이 달라요. 파일의 한 줄 전체를 넣어 주세요."); return; }
+    memCode = v; setCode(v); $("code").value = ""; load();
+  });
+  $("code").addEventListener("keydown", (e) => { if (e.key === "Enter") $("save").click(); });
+  $("reload").addEventListener("click", load);
+  $("forget").addEventListener("click", () => { setCode(""); memCode = ""; showLogin(); });
+  let rz = 0;
+  window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { if (lastDays.length) drawChart(lastDays); }, 150); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !$("main").classList.contains("hide")) load(); });
+  setInterval(() => { if (!document.hidden && !$("main").classList.contains("hide")) load(); }, 300000);
+  load();
+})();
+</script>
+</body>
+</html>
