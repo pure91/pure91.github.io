@@ -244,19 +244,26 @@ input[type=password], input[type=text] {
     const days = d.days || [];
     const today = days[days.length - 1] || {};
     const back = d.old_enough ? Math.round(100 * d.came_back / d.old_enough) : 0;
+    // 27단계 서버 숫자 (지금 접속 중 · 광고 · 환불): 서버가 아직 안 보내면 '-'
+    const has = (v) => v !== null && v !== undefined;
+    const avg = d.ads_people ? (d.ads_total / d.ads_people).toLocaleString("ko-KR", { maximumFractionDigits: 1 }) : "0";
     $("tiles").innerHTML =
       tile("플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android)) +
       tile("오늘 새 플레이어", fmt(today.players), "iOS " + fmt(today.ios) + " · Android " + fmt(today.android)) +
+      tile("지금 접속 중", has(d.online) ? fmt(d.online) : "-", "최근 5분") +
       tile("최근 7일 접속", fmt(d.active_7d), "다음 날 이후 다시 옴 " + fmt(d.came_back) + "명 (" + back + "%)") +
-      tile("매출 (정가 기준)", won(d.krw_total), "결제 " + fmt(d.orders_total) + "건 · 오늘 " + won(today.krw)) +
+      tile("매출 (정가 기준)", won(d.krw_total), "결제 " + fmt(d.orders_total) + "건" +
+        (has(d.refunds_total) ? " · 환불 " + fmt(d.refunds_total) + "건" : "") + " · 오늘 " + won(today.krw)) +
+      tile("광고 본 횟수", has(d.ads_total) ? fmt(d.ads_total) : "-",
+        has(d.ads_total) ? "1인당 " + avg + "회 · 오늘 " + fmt(today.ads) + "회" : "") +
       tile("최고 스테이지", stageName(d.top_stage), d.top_stage === null || d.top_stage === undefined ? "" : fmt(stageZone(Math.floor(d.top_stage))) + "구역") +
       tile("바로 나감", fmt(d.bounces), "");
     drawChart(days);
-    let h = "<tr><th>날짜</th><th>새 플레이어</th><th>iOS</th><th>Android</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>매출</th><th>주간 보스</th></tr>";
+    let h = "<tr><th>날짜</th><th>새 플레이어</th><th>iOS</th><th>Android</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>환불</th><th>매출</th><th>광고</th><th>주간 보스</th></tr>";
     for (const r of days.slice().reverse()) {
       const c = (v, s) => '<td class="' + (v ? "" : "zero") + '">' + (s === undefined ? fmt(v) : s) + "</td>";
       h += "<tr><td>" + esc(r.d) + "</td>" + c(r.players) + c(r.ios || 0) + c(r.android || 0) + c(r.bounces) + c(r.returning) + c(r.orders) +
-        c(r.krw, r.krw ? won(r.krw) : "0") + c(r.wb) + "</tr>";
+        c(r.refunds || 0) + c(r.krw, r.krw ? won(r.krw) : "0") + c(r.ads, has(r.ads) ? fmt(r.ads) : "-") + c(r.wb) + "</tr>";
     }
     $("days").innerHTML = h;
     const sb = d.stage_buckets || {};
