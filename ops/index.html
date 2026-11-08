@@ -96,7 +96,8 @@ td.zero { color: var(--text-3); }
 .hbar .c { text-align: right; font-variant-numeric: tabular-nums; }
 .order { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--grid); font-size: 13px; }
 .order:last-child { border-bottom: 0; }
-.order .p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.order .p { min-width: 0; }
+.order .p > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .muted { color: var(--text-3); font-size: 12px; }
 .err { color: var(--bad); font-size: 14px; margin: 8px 0 0; }
 input[type=password], input[type=text] {
@@ -120,7 +121,6 @@ input[type=password], input[type=text] {
 
   <div id="login" class="card hide">
     <h2>접근 코드</h2>
-    <div class="muted">PC 의 build/dashboard_code.txt 에 있는 한 줄을 붙여 넣으세요. 이 기기의 브라우저에만 저장됩니다.</div>
     <input id="code" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="접근 코드">
     <button id="save" class="primary" type="button">보기</button>
     <div id="loginErr" class="err hide"></div>
@@ -132,13 +132,11 @@ input[type=password], input[type=text] {
     <div class="card">
       <h2>하루 새 플레이어 (최근 14일)</h2>
       <div class="chart" id="chart"><div class="tip" id="tip"></div></div>
-      <div class="muted">플레이어 = 첫 보스(1-1)를 잡은 계정. 막대를 누르면 그날 숫자가 보입니다.</div>
     </div>
 
     <div class="card">
       <h2>날짜별</h2>
       <div class="tbl-wrap"><table id="days"></table></div>
-      <div class="muted">돌아옴 = 그날 가입하지 않고 다시 들어온 계정 (11-06 부터 셈). 표는 옆으로 밀어 볼 수 있어요.</div>
     </div>
 
     <div class="card">
@@ -152,11 +150,7 @@ input[type=password], input[type=text] {
     </div>
 
     <div class="notes">
-      <p>읽기만 하는 페이지입니다. 서버는 합계 숫자만 돌려주고 아무것도 바꾸지 않으며, 60초에 한 번만 다시 셉니다.</p>
-      <p>매출은 정가(원)로 센 추정치입니다. 실제 정산·환율·수수료는 App Store Connect · Play Console 에서 봅니다.</p>
-      <p>나라별 다운로드는 서버에 없어서 App Store Connect 분석 · Play Console 통계에서 봅니다.</p>
-      <p>개발 계정 · PC 녹화 · 도구 계정은 빼고 셉니다. '바로 나감'에는 구글 출시 전 자동 테스트 기기도 들어 있습니다.</p>
-      <p><button id="forget" type="button">이 기기에서 코드 지우기</button></p>
+      <button id="forget" type="button">이 기기에서 코드 지우기</button>
     </div>
   </div>
 </div>
@@ -233,7 +227,7 @@ input[type=password], input[type=text] {
       tile("최근 7일 접속", fmt(d.active_7d), "다음 날 이후 다시 옴 " + fmt(d.came_back) + "명 (" + back + "%)") +
       tile("매출 (정가 기준)", won(d.krw_total), "결제 " + fmt(d.orders_total) + "건 · 오늘 " + won(today.krw)) +
       tile("최고 스테이지", fmt(d.top_stage), "") +
-      tile("바로 나감", fmt(d.bounces), "1-1 전에 나간 설치 (자동 테스트 포함)");
+      tile("바로 나감", fmt(d.bounces), "");
     drawChart(days);
     let h = "<tr><th>날짜</th><th>새 플레이어</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>매출</th><th>주간 보스</th></tr>";
     for (const r of days.slice().reverse()) {
@@ -249,11 +243,12 @@ input[type=password], input[type=text] {
       '<div class="hbar"><span>' + k + '</span><div class="track"><div class="fill" style="width:' +
       (100 * (sb[k] || 0) / mx) + '%' + (sb[k] ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(sb[k]) + "</span></div>").join("");
     const os = d.recent_orders || [];
+    // 결제한 사람: 닉네임 #태그 (닉네임이 없으면 순위표처럼 '보안관 #태그'). 서버가 이름을 안 주면 그 칸은 비움
+    const who = (o) => o.tag ? (o.name ? o.name + " #" + o.tag : "보안관 #" + o.tag) : "";
     $("orders").innerHTML = os.length ? os.map((o) =>
-      '<div class="order"><span class="p">' + esc(o.at) + " · " + esc(product(o.product)) + " · " + (o.platform === "ios" ? "iOS" : "Android") +
-      (o.refunded ? " · 환불" : "") + "</span><span>" + won(o.krw) + "</span></div>").join("")
+      '<div class="order"><div class="p"><div>' + esc(product(o.product)) + (o.refunded ? " · 환불" : "") + '</div><div class="muted">' +
+      esc([o.at, who(o), o.platform === "ios" ? "iOS" : "Android"].filter(Boolean).join(" · ")) + "</div></div><span>" + won(o.krw) + "</span></div>").join("")
       : '<div class="muted">아직 없어요.</div>';
-    if (d.test_orders_total) $("orders").innerHTML += '<div class="muted" style="margin-top:6px">테스트 결제 ' + fmt(d.test_orders_total) + "건은 빼고 셈</div>";
   }
 
   function drawChart(days) {
