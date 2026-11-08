@@ -247,6 +247,12 @@ input[type=password], input[type=text] {
     // 27단계 서버 숫자 (지금 접속 중 · 광고 · 환불): 서버가 아직 안 보내면 '-'
     const has = (v) => v !== null && v !== undefined;
     const avg = d.ads_people ? (d.ads_total / d.ads_people).toLocaleString("ko-KR", { maximumFractionDigits: 1 }) : "0";
+    // 최근 3일 (오늘 포함, 한국 날짜, 날짜별 표의 마지막 3줄). 광고는 날짜별 합 (27단계를 올린 11-08 13:46 부터 쌓여서 11-11 부터 온전),
+    // 바로 나감은 그 3일 동안 새로 온 사람 중 1-1 을 못 깬 비율 (막 들어와 아직 1-1 중인 사람도 잠깐 셈) (사용자 11-08)
+    const last3 = days.slice(-3);
+    const ads3 = last3.reduce((a, r) => a + (r.ads || 0), 0);
+    const bounce3 = last3.reduce((a, r) => a + (r.bounces || 0), 0);
+    const new3 = last3.reduce((a, r) => a + (r.players || 0) + (r.bounces || 0), 0);
     $("tiles").innerHTML =
       tile("플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android)) +
       tile("오늘 새 플레이어", fmt(today.players), "iOS " + fmt(today.ios) + " · Android " + fmt(today.android)) +
@@ -255,9 +261,10 @@ input[type=password], input[type=text] {
       tile("매출 (정가 기준)", won(d.krw_total), "결제 " + fmt(d.orders_total) + "건" +
         (has(d.refunds_total) ? " · 환불 " + fmt(d.refunds_total) + "건" : "") + " · 오늘 " + won(today.krw)) +
       tile("광고 본 횟수", has(d.ads_total) ? fmt(d.ads_total) : "-",
-        has(d.ads_total) ? "1인당 " + avg + "회 · 오늘 " + fmt(today.ads) + "회" : "") +
+        has(d.ads_total) ? "최근 3일 " + fmt(ads3) + "회 · 오늘 " + fmt(today.ads) + "회 · 1인당 " + avg + "회" : "") +
       tile("최고 스테이지", stageName(d.top_stage), d.top_stage === null || d.top_stage === undefined ? "" : fmt(stageZone(Math.floor(d.top_stage))) + "구역") +
-      tile("바로 나감", fmt(d.bounces), "");
+      tile("바로 나감 (최근 3일)", new3 ? Math.round(100 * bounce3 / new3) + "%" : "-",
+        "새로 온 " + fmt(new3) + "명 중 " + fmt(bounce3) + "명 · 전체 " + fmt(d.bounces) + "명");
     drawChart(days);
     let h = "<tr><th>날짜</th><th>새 플레이어</th><th>iOS</th><th>Android</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>환불</th><th>매출</th><th>광고</th><th>주간 보스</th></tr>";
     for (const r of days.slice().reverse()) {
