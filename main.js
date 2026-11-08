@@ -1,6 +1,6 @@
 // ---- Store links: flip a store's `live` to true the day it goes public and its badge becomes a real link. ----
 const STORE = {
-  live: { play: false, ios: true },  // ios: public on the App Store since 2026-11-06
+  live: { play: true, ios: true },  // ios: public on the App Store since 2026-11-06, play: production published 2026-11-08
   play: 'https://play.google.com/store/apps/details?id=com.squirrelsheriff.idle',
   ios: 'https://apps.apple.com/app/id6825570982',
   // App Store country per site language: the plain link opened the US store on a computer, also from the Korean page (user 11-07). No zh-CN: not sold in China.
