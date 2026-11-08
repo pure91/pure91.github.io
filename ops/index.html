@@ -98,7 +98,7 @@ th, td { text-align: right; padding: 6px 4px; border-bottom: 1px solid var(--gri
 th:first-child, td:first-child { text-align: left; }
 th { color: var(--text-2); font-weight: 600; }
 td.zero { color: var(--text-3); }
-.hbar { display: grid; grid-template-columns: 70px 1fr 36px; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
+.hbar { display: grid; grid-template-columns: 112px 1fr 36px; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
 .hbar .track { height: 12px; }
 .hbar .fill { height: 12px; background: var(--accent); border-radius: 0 4px 4px 0; min-width: 2px; }
 .hbar .c { text-align: right; font-variant-numeric: tabular-nums; }
@@ -223,6 +223,20 @@ input[type=password], input[type=text] {
       (n ? '<div class="n">' + esc(n) + '</div>' : "") + "</div>";
   }
 
+  // 서버 스테이지 값 = 0부터 센 스테이지 번호 ((구역 - 1) × 5 + (스테이지 - 1)) → 게임 순위표처럼 '어려움 8-2'
+  // 구역 20개마다 난이도 한 단계 (data/balance.json zones_per_tier · tier_names), 그 뒤는 무한 1, 무한 2 …
+  const TIERS = ["쉬움", "보통", "어려움", "매우 어려움", "지옥", "심연", "공허", "종말", "신화", "초월"];
+  function stageZone(i) { return Math.floor(i / 5) + 1; }
+  function stageName(i) {
+    if (i === null || i === undefined) return "-";
+    i = Math.floor(i);
+    const z = stageZone(i), t = Math.floor((z - 1) / 20);
+    return (t < TIERS.length ? TIERS[t] : "무한 " + (t - TIERS.length + 1)) + " " + ((z - 1) % 20 + 1) + "-" + (i % 5 + 1);
+  }
+  // 서버가 나누는 스테이지 번호 칸 → 구역 · 난이도 이름
+  const STAGE_KEYS = [["1-9", "쉬움 1~2구역"], ["10-49", "쉬움 3~10구역"], ["50-199", "쉬움 11~보통 20"],
+    ["200-999", "어려움~초월"], ["1000+", "무한"]];
+
   let lastDays = [];
   function render(d) {
     lastDays = d.days || [];
@@ -235,7 +249,7 @@ input[type=password], input[type=text] {
       tile("오늘 새 플레이어", fmt(today.players), "iOS " + fmt(today.ios) + " · Android " + fmt(today.android)) +
       tile("최근 7일 접속", fmt(d.active_7d), "다음 날 이후 다시 옴 " + fmt(d.came_back) + "명 (" + back + "%)") +
       tile("매출 (정가 기준)", won(d.krw_total), "결제 " + fmt(d.orders_total) + "건 · 오늘 " + won(today.krw)) +
-      tile("최고 스테이지", fmt(d.top_stage), "") +
+      tile("최고 스테이지", stageName(d.top_stage), d.top_stage === null || d.top_stage === undefined ? "" : fmt(stageZone(Math.floor(d.top_stage))) + "구역") +
       tile("바로 나감", fmt(d.bounces), "");
     drawChart(days);
     let h = "<tr><th>날짜</th><th>새 플레이어</th><th>iOS</th><th>Android</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>매출</th><th>주간 보스</th></tr>";
@@ -246,10 +260,9 @@ input[type=password], input[type=text] {
     }
     $("days").innerHTML = h;
     const sb = d.stage_buckets || {};
-    const keys = ["1-9", "10-49", "50-199", "200-999", "1000+"];
-    const mx = Math.max(1, ...keys.map((k) => sb[k] || 0));
-    $("stages").innerHTML = keys.map((k) =>
-      '<div class="hbar"><span>' + k + '</span><div class="track"><div class="fill" style="width:' +
+    const mx = Math.max(1, ...STAGE_KEYS.map(([k]) => sb[k] || 0));
+    $("stages").innerHTML = STAGE_KEYS.map(([k, label]) =>
+      '<div class="hbar"><span>' + label + '</span><div class="track"><div class="fill" style="width:' +
       (100 * (sb[k] || 0) / mx) + '%' + (sb[k] ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(sb[k]) + "</span></div>").join("");
     const os = d.recent_orders || [];
     // 결제한 사람: 닉네임 #태그 (닉네임이 없으면 순위표처럼 '보안관 #태그'). 서버가 이름을 안 주면 그 칸은 비움
