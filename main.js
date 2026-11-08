@@ -24,6 +24,8 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const LANGS = Object.keys(I18N);
 
 function pickLang() {
+  const page = document.documentElement.dataset.page;  // /ko/, /ja/ …: the page is always its own language (tools/build_pages.mjs)
+  if (page && I18N[page]) return page;
   const q = new URLSearchParams(location.search).get('lang');
   if (q && I18N[q]) return q;
   try { const s = localStorage.getItem('lang'); if (s && I18N[s]) return s; } catch (e) {}
@@ -63,7 +65,7 @@ function apply(lang) {
   const [t1, ...rest] = t.name.split(/\s*[:：]\s*/);
   const vals = Object.assign({}, t, { title1: t1, title2: t.pill || rest.join(' ') });  // pill: badge text when it differs from the store name (ko drops the repeated 보안관)
   document.documentElement.lang = lang;
-  document.title = t.name;
+  document.title = `${t.name} - ${t.subtitle}`;  // same as the static <title> from tools/build_pages.mjs
   $('meta[name=description]').content = t.promo;
   loadFont(lang);
   $('#langCur').textContent = t.native;
@@ -72,9 +74,9 @@ function apply(lang) {
   $$('[data-t]').forEach(el => { const v = vals[el.dataset.t]; if (v) el.textContent = v; });
   $$('[data-mode]').forEach(el => { el.textContent = t.modes[+el.dataset.mode]; });
   $$('[data-chip]').forEach(el => { el.textContent = t.wbChips[+el.dataset.chip]; });
-  $$('[data-shot]').forEach(el => { el.src = `assets/shots/${t.shots}/${el.dataset.shot}.webp?v=${SHOT_REV}`; });
+  $$('[data-shot]').forEach(el => { el.src = `/assets/shots/${t.shots}/${el.dataset.shot}.webp?v=${SHOT_REV}`; });
   $('#strip').innerHTML = Array.from({ length: SHOT_COUNT }, (_, i) => i + 1)
-    .map(i => `<img src="assets/shots/${t.shots}/${i}.webp?v=${SHOT_REV}" alt="" loading="lazy" width="270" height="480">`).join('');
+    .map(i => `<img src="/assets/shots/${t.shots}/${i}.webp?v=${SHOT_REV}" alt="" loading="lazy" width="270" height="480">`).join('');
   badges(t, lang);
   setVideo(lang);
   try { localStorage.setItem('lang', lang); } catch (e) {}
@@ -111,7 +113,8 @@ function choose(k) {
   closeList(true);
   if (k === lang) return;
   lang = k; apply(lang);
-  const u = new URL(location); u.searchParams.set('lang', lang); history.replaceState(null, '', u);
+  // address follows the language page (/ko/, /ja/ …; English = /), so a shared or reloaded link opens the same language
+  history.replaceState(null, '', (lang === 'en' ? '/' : `/${lang.toLowerCase()}/`) + location.hash);
 }
 langBtn.addEventListener('click', () => (langList.hidden ? openList() : closeList(true)));
 langBtn.addEventListener('keydown', e => {
@@ -144,8 +147,8 @@ function setVideo(l) {
   const v = VIDEO_LANGS[l] || 'en';
   if (vid.dataset.v === v) return;
   vid.dataset.v = v;
-  vid.poster = `assets/video/poster_${v}.webp?v=${VIDEO_REV}`;
-  vid.src = `assets/video/play_${v}.mp4?v=${VIDEO_REV}`;
+  vid.poster = `/assets/video/poster_${v}.webp?v=${VIDEO_REV}`;
+  vid.src = `/assets/video/play_${v}.mp4?v=${VIDEO_REV}`;
   if (vidSeen && !reduced) vid.play().catch(() => {});
 }
 function syncPaused() { phone.classList.toggle('paused', vid.paused); }
@@ -174,7 +177,7 @@ const PETS = ['armadillo', 'bighorn', 'bison', 'black_bear', 'coyote', 'gila', '
   'lizard', 'longhorn', 'moon_deer', 'mustang', 'phoenix', 'puma', 'quail', 'roadrunner', 'sand_beetle', 'slime',
   'spirit_horse', 'star_coyote', 'sun_eagle', 'thunderbird', 'tortoise', 'tumbleweed', 'wolf'];
 const SKINS = ['hat_sheriff', 'hat_black', 'hat_cactus', 'hat_canyon', 'hat_cream', 'hat_gold', 'hat_red', 'hat_sky', 'hat_star', 'hat_straw'];
-const row = list => { const h = list.map(s => `<img src="assets/${s}.webp" alt="" loading="lazy" width="96" height="96">`).join(''); return h + h; };
+const row = list => { const h = list.map(s => `<img src="/assets/${s}.webp" alt="" loading="lazy" width="96" height="96">`).join(''); return h + h; };
 $('#trackA').innerHTML = row([...CREW.map(c => 'crew/' + c), ...SKINS.map(s => 'skins/' + s)]);
 $('#trackB').innerHTML = row(PETS.map(p => 'pets/' + p));
 
@@ -182,14 +185,14 @@ $('#trackB').innerHTML = row(PETS.map(p => 'pets/' + p));
 const orbitPets = ['phoenix', 'moon_deer', 'thunderbird', 'tortoise', 'spirit_horse', 'jackrabbit', 'star_coyote', 'black_bear'];
 const orbit = document.createElement('div');
 orbit.className = 'orbit';
-orbit.innerHTML = orbitPets.map((p, i) => `<span style="--a:${i * 45}deg"><img src="assets/pets/${p}.webp" alt="" loading="lazy"></span>`).join('');
+orbit.innerHTML = orbitPets.map((p, i) => `<span style="--a:${i * 45}deg"><img src="/assets/pets/${p}.webp" alt="" loading="lazy"></span>`).join('');
 $('#ring').prepend(orbit);
 const skin = $('#skin');
 let si = 0;
 if (!reduced) setInterval(() => {
   si = (si + 1) % SKINS.length;
   skin.classList.add('swap');
-  skin.src = `assets/skins/${SKINS[si]}.webp`;
+  skin.src = `/assets/skins/${SKINS[si]}.webp`;
   void skin.offsetWidth;
   skin.classList.remove('swap');
 }, 1600);
@@ -202,11 +205,11 @@ const MERGE_MS = 2800, PAIR_SWAP_AT = .65; // pair is hidden from 44% to the end
 let mi = 0;
 // Each part is swapped only while it is invisible, so no old weapon flashes on screen.
 function setPair(k) {
-  $$('.slot.l img, .slot.r img', merge).forEach(i => { i.src = `assets/weapons/${WEAPONS[k % WEAPONS.length]}.webp`; });
+  $$('.slot.l img, .slot.r img', merge).forEach(i => { i.src = `/assets/weapons/${WEAPONS[k % WEAPONS.length]}.webp`; });
   $$('.slot.l em, .slot.r em', merge).forEach(e => { e.textContent = GRADES[k % (GRADES.length - 1)]; });
 }
 function setResult(k) {
-  $('.slot.out img', merge).src = `assets/weapons/${WEAPONS[(k + 1) % WEAPONS.length]}.webp`;
+  $('.slot.out img', merge).src = `/assets/weapons/${WEAPONS[(k + 1) % WEAPONS.length]}.webp`;
   $('.slot.out em', merge).textContent = GRADES[k % (GRADES.length - 1) + 1];
 }
 function schedulePair() {
@@ -218,7 +221,7 @@ setPair(0); setResult(0);
 $('.slot.out', merge).addEventListener('animationiteration', () => { mi++; setResult(mi); schedulePair(); });
 if (!reduced) schedulePair();
 // preload weapons so swaps never flash
-WEAPONS.forEach(w => { new Image().src = `assets/weapons/${w}.webp`; });
+WEAPONS.forEach(w => { new Image().src = `/assets/weapons/${w}.webp`; });
 
 // ---- idle reward counters (golden acorns, acorns, gems) ----
 const acornEl = $('#acorns'), goldEl = $('#gold'), gemEl = $('#gems');
@@ -248,7 +251,7 @@ function drop() {
   if (document.hidden || sky.childElementCount > 14) return;
   const img = document.createElement('img');
   img.className = 'acorn';
-  img.src = `assets/${DROPS[Math.random() * DROPS.length | 0]}.webp`;
+  img.src = `/assets/${DROPS[Math.random() * DROPS.length | 0]}.webp`;
   img.alt = '';
   img.style.left = Math.random() * 100 + '%';
   img.style.width = 22 + Math.random() * 22 + 'px';
