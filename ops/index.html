@@ -145,7 +145,7 @@ input[type=password], input[type=text] {
     <div class="tiles two" id="adTiles"></div>
 
     <div class="card">
-      <h2>하루 새 플레이어 (최근 14일)</h2>
+      <h2 id="chartTitle">하루 새 플레이어</h2>
       <div class="legend"><span><i style="background:var(--s1)"></i>iOS</span><span><i style="background:var(--s2)"></i>Android</span></div>
       <div class="chart" id="chart"><div class="tip" id="tip"></div></div>
     </div>
@@ -259,13 +259,21 @@ input[type=password], input[type=text] {
   }
   // 서버가 나누는 스테이지 번호 칸 → 구역 · 난이도 이름
   const STAGE_KEYS = [["1-9", "쉬움 1~2구역"], ["10-49", "쉬움 3~10구역"], ["50-199", "쉬움 11~보통 20"],
-    ["200-999", "어려움~초월"], ["1000+", "무한"]];
+    ["200-299", "어려움"], ["300-399", "매우 어려움"], ["400-499", "지옥"], ["500-599", "심연"],
+    ["600-699", "공허"], ["700-799", "종말"], ["800-899", "신화"], ["900-999", "초월"], ["1000+", "무한"]];
+  // 서버가 난이도별 칸을 아직 안 보내면 예전처럼 한 줄로
+  const STAGE_KEYS_OLD = STAGE_KEYS.slice(0, 3).concat([["200-999", "어려움~초월"], ["1000+", "무한"]]);
+  // 최초 출시일 (App Store 0.1.0, 2026-11-06). 그 전 날짜는 비공개 테스트라 날짜별 표 · 그래프에서 뺌 (사용자 11-10)
+  const LAUNCH = "11-06";
 
   let lastDays = [];
   function render(d) {
-    lastDays = d.days || [];
     $("at").textContent = d.at + " 기준 (한국 시간)";
-    const days = d.days || [];
+    const allDays = d.days || [];
+    const launchAt = allDays.findIndex((r) => r.d === LAUNCH);      // 14일 창이 출시일을 지나가면 -1 = 그대로 전부
+    const days = launchAt > 0 ? allDays.slice(launchAt) : allDays;
+    lastDays = days;
+    $("chartTitle").textContent = "하루 새 플레이어 (" + (launchAt >= 0 ? "출시일부터" : "최근 14일") + ")";
     const today = days[days.length - 1] || {};
     const back = d.old_enough ? Math.round(100 * d.came_back / d.old_enough) : 0;
     // 27단계 서버 숫자 (지금 접속 중 · 광고 · 환불): 서버가 아직 안 보내면 '-'
@@ -289,10 +297,11 @@ input[type=password], input[type=text] {
       tile("전체 플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android)) +
       tile("오늘 새 플레이어", fmt(today.players), "iOS " + fmt(today.ios) + " · Android " + fmt(today.android)) +
       tile("지금 접속 중", has(d.online) ? fmt(d.online) : "-", "최근 5분") +
-      tile("최근 7일 접속", fmt(d.active_7d), "다음 날 이후 다시 옴 " + fmt(d.came_back) + "명 (" + back + "%)") +
+      tile("최근 3일 접속", has(d.active_3d) ? fmt(d.active_3d) : "-", "다음 날 이후 다시 옴 " + fmt(d.came_back) + "명 (" + back + "%)") +
       tile("최고 스테이지", stageName(d.top_stage), topNote) +
       tile("바로 나감 (최근 3일)", new3 ? Math.round(100 * bounce3 / new3) + "%" : "-",
-        "새로 온 " + fmt(new3) + "명 중 " + fmt(bounce3) + "명 · 전체 " + fmt(d.bounces) + "명");
+        "새 계정 " + fmt(new3) + "명 중 " + fmt(bounce3) + "명" +
+        (has(d.launch_accounts) ? " · 출시 후 " + fmt(d.launch_accounts) + "명 중 " + fmt(d.launch_bounces) + "명" : ""));
     $("rev").innerHTML =
       tile("어제 매출", won(yest.krw), paid(yest.orders)) +
       tile("오늘 매출", won(today.krw), paid(today.orders)) +
@@ -308,8 +317,9 @@ input[type=password], input[type=text] {
     }
     $("days").innerHTML = h;
     const sb = d.stage_buckets || {};
-    const mx = Math.max(1, ...STAGE_KEYS.map(([k]) => sb[k] || 0));
-    $("stages").innerHTML = STAGE_KEYS.map(([k, label]) =>
+    const stageKeys = "200-299" in sb ? STAGE_KEYS : STAGE_KEYS_OLD;
+    const mx = Math.max(1, ...stageKeys.map(([k]) => sb[k] || 0));
+    $("stages").innerHTML = stageKeys.map(([k, label]) =>
       '<div class="hbar"><span>' + label + '</span><div class="track"><div class="fill" style="width:' +
       (100 * (sb[k] || 0) / mx) + '%' + (sb[k] ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(sb[k]) + "</span></div>").join("");
     const os = d.recent_orders || [];
@@ -331,7 +341,7 @@ input[type=password], input[type=text] {
     const n = days.length || 1, max = Math.max(4, ...days.map((r) => r.players || 0));
     const step = Math.ceil(max / 4), top = step * 4;
     const bw = (W - L - R) / n, gap = 2, y = (v) => T + (H - T - B) * (1 - v / top);
-    let s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="최근 14일 하루 새 플레이어 수">';
+    let s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="하루 새 플레이어 수">';
     for (let g = 0; g <= 4; g++) {
       const v = step * g, yy = y(v);
       s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '" stroke="var(--grid)" stroke-width="1"/>';
@@ -347,14 +357,14 @@ input[type=password], input[type=text] {
         "H" + (x + w - rr) + (rr ? "Q" + (x + w) + "," + top + " " + (x + w) + "," + (top + rr) : "") + "V" + bottom + 'Z" fill="' + fill + '"/>';
     };
     days.forEach((r, i) => {
-      const x = L + i * bw + gap / 2, w = Math.max(2, bw - gap), v = r.players || 0, yy = y(v);
+      const w = Math.min(44, Math.max(2, bw - gap)), x = L + i * bw + (bw - w) / 2, v = r.players || 0, yy = y(v);      // 날짜가 적어도 막대가 뚱뚱해지지 않게
       const vi = r.ios || 0, va = r.android || 0, base = H - B, yi = y(vi), ya = y(vi + va);
       s += seg(x, w, yi, base, va === 0, "var(--s1)");                       // iOS 아래
       s += seg(x, w, ya, vi > 0 ? yi - 2 : base, true, "var(--s2)");         // Android 위 (사이 2px 틈)
       if ((i === best && v > 0) || i === n - 1) {
         s += '<text x="' + (x + w / 2) + '" y="' + (yy - 4) + '" text-anchor="middle" font-size="11" fill="var(--text-2)">' + v + "</text>";
       }
-      if (i % 2 === (n - 1) % 2) {
+      if (n <= 8 || i % 2 === (n - 1) % 2) {
         s += '<text x="' + (x + w / 2) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="10.5" fill="var(--text-3)">' + esc(r.d.slice(3)) + "</text>";
       }
       s += '<rect data-i="' + i + '" x="' + (L + i * bw) + '" y="' + T + '" width="' + bw + '" height="' + (H - T - B) + '" fill="transparent"/>';
