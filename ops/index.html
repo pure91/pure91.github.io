@@ -83,6 +83,11 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .tile .k { color: var(--text-2); font-size: 13px; }
 .tile .v { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .tile .n { color: var(--text-3); font-size: 12px; margin-top: 2px; }
+.tiles.four .v { font-size: 22px; }
+@media (min-width: 620px) {
+  .tiles.four { grid-template-columns: repeat(4, 1fr); }
+  .tiles.two { grid-template-columns: repeat(2, 1fr); }
+}
 .chart { position: relative; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-2); margin: -4px 0 6px; }
@@ -136,6 +141,8 @@ input[type=password], input[type=text] {
 
   <div id="main" class="hide">
     <div class="tiles" id="tiles"></div>
+    <div class="tiles four" id="rev"></div>
+    <div class="tiles two" id="adTiles"></div>
 
     <div class="card">
       <h2>하루 새 플레이어 (최근 14일)</h2>
@@ -158,6 +165,11 @@ input[type=password], input[type=text] {
       <div id="orders"></div>
     </div>
 
+    <div class="card hide" id="countryCard">
+      <h2>결제한 나라</h2>
+      <div id="countries"></div>
+    </div>
+
     <div class="notes">
       <button id="forget" type="button">이 기기에서 코드 지우기</button>
     </div>
@@ -175,6 +187,18 @@ input[type=password], input[type=text] {
     gems_3: "보석 상자", gems_4: "보석 금고", gems_5: "보석 마차", weekly_w1: "주간 상품 (무기 1)", weekly_w2: "주간 상품 (무기 2)",
     weekly_p1: "주간 상품 (펫)", vip_time: "VIP 시간", vip_reward: "VIP 보상", vip_convenience: "VIP 편의"
   };
+  // 광고 1회 예상 수입 (원). AdMob 실적에서 잡은 대략값이라 실적이 쌓이면 다시 잡기
+  const AD_KRW_PER_VIEW = 65;
+  // 스토어 원본의 나라 코드: Apple 은 세 글자(USA), Google 은 두 글자(US)
+  const A3 = { USA: "US", KOR: "KR", JPN: "JP", TWN: "TW", HKG: "HK", CAN: "CA", GBR: "GB", DEU: "DE", FRA: "FR", AUS: "AU", NZL: "NZ",
+    BRA: "BR", MEX: "MX", IDN: "ID", THA: "TH", VNM: "VN", MYS: "MY", PHL: "PH", SGP: "SG", RUS: "RU", ESP: "ES", ITA: "IT", ARM: "AM" };
+  let regionNames = null;
+  try { regionNames = new Intl.DisplayNames(["ko"], { type: "region" }); } catch (e) {}
+  function country(c) {
+    if (!c) return "";
+    if (c === "?") return "모름";
+    try { return regionNames ? regionNames.of(A3[c] || c) : c; } catch (e) { return c; }
+  }
   const $ = (id) => document.getElementById(id);
   const fmt = (n) => Number(n || 0).toLocaleString("ko-KR");
   const won = (n) => fmt(n) + "원";
@@ -246,25 +270,35 @@ input[type=password], input[type=text] {
     const back = d.old_enough ? Math.round(100 * d.came_back / d.old_enough) : 0;
     // 27단계 서버 숫자 (지금 접속 중 · 광고 · 환불): 서버가 아직 안 보내면 '-'
     const has = (v) => v !== null && v !== undefined;
-    const avg = d.ads_people ? (d.ads_total / d.ads_people).toLocaleString("ko-KR", { maximumFractionDigits: 1 }) : "0";
-    // 최근 3일 (오늘 포함, 한국 날짜, 날짜별 표의 마지막 3줄). 광고는 날짜별 합 (27단계를 올린 11-08 13:46 부터 쌓여서 11-11 부터 온전),
+    // 결제한 사람 · 최고 스테이지 주인: 닉네임 #태그 (닉네임이 없으면 순위표처럼 '보안관 #태그'). 서버가 이름을 안 주면 그 칸은 비움
+    const who = (o) => o.tag ? (o.name ? o.name + " #" + o.tag : "보안관 #" + o.tag) : "";
+    // 최근 3일 (오늘 포함, 한국 날짜, 날짜별 표의 마지막 3줄).
     // 바로 나감은 그 3일 동안 새로 온 사람 중 1-1 을 못 깬 비율 (막 들어와 아직 1-1 중인 사람도 잠깐 셈) (사용자 11-08)
     const last3 = days.slice(-3);
-    const ads3 = last3.reduce((a, r) => a + (r.ads || 0), 0);
     const bounce3 = last3.reduce((a, r) => a + (r.bounces || 0), 0);
     const new3 = last3.reduce((a, r) => a + (r.players || 0) + (r.bounces || 0), 0);
+    // 어제 · 최근 7일 (오늘 포함) 은 이미 받은 날짜별 숫자를 더한 값이라 서버에 더 묻지 않음 (사용자 11-10 '메모리 부담이나 게임 서버에 영향주면 하지말고')
+    const yest = days[days.length - 2] || {};
+    const last7 = days.slice(-7);
+    const sum = (list, k) => list.reduce((a, r) => a + (r[k] || 0), 0);
+    const paid = (n) => "결제 " + fmt(n) + "건";
+    const adTile = (k, n) => tile(k, has(n) ? fmt(n) : "-", has(n) ? "예상 매출 약 " + won(Math.round(n * AD_KRW_PER_VIEW / 10) * 10) : "");
+    const topNote = !has(d.top_stage) ? "" :
+      [who({ name: d.top_name, tag: d.top_tag }), fmt(stageZone(Math.floor(d.top_stage))) + "구역"].filter(Boolean).join(" · ");
     $("tiles").innerHTML =
-      tile("플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android)) +
+      tile("전체 플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android)) +
       tile("오늘 새 플레이어", fmt(today.players), "iOS " + fmt(today.ios) + " · Android " + fmt(today.android)) +
       tile("지금 접속 중", has(d.online) ? fmt(d.online) : "-", "최근 5분") +
       tile("최근 7일 접속", fmt(d.active_7d), "다음 날 이후 다시 옴 " + fmt(d.came_back) + "명 (" + back + "%)") +
-      tile("매출 (정가 기준)", won(d.krw_total), "결제 " + fmt(d.orders_total) + "건" +
-        (has(d.refunds_total) ? " · 환불 " + fmt(d.refunds_total) + "건" : "") + " · 오늘 " + won(today.krw)) +
-      tile("광고 본 횟수", has(d.ads_total) ? fmt(d.ads_total) : "-",
-        has(d.ads_total) ? "최근 3일 " + fmt(ads3) + "회 · 오늘 " + fmt(today.ads) + "회 · 1인당 " + avg + "회" : "") +
-      tile("최고 스테이지", stageName(d.top_stage), d.top_stage === null || d.top_stage === undefined ? "" : fmt(stageZone(Math.floor(d.top_stage))) + "구역") +
+      tile("최고 스테이지", stageName(d.top_stage), topNote) +
       tile("바로 나감 (최근 3일)", new3 ? Math.round(100 * bounce3 / new3) + "%" : "-",
         "새로 온 " + fmt(new3) + "명 중 " + fmt(bounce3) + "명 · 전체 " + fmt(d.bounces) + "명");
+    $("rev").innerHTML =
+      tile("어제 매출", won(yest.krw), paid(yest.orders)) +
+      tile("오늘 매출", won(today.krw), paid(today.orders)) +
+      tile("최근 7일 매출", won(sum(last7, "krw")), paid(sum(last7, "orders"))) +
+      tile("누적 매출", won(d.krw_total), paid(d.orders_total) + (has(d.refunds_total) ? " · 환불 " + fmt(d.refunds_total) + "건" : ""));
+    $("adTiles").innerHTML = adTile("어제 광고 본 횟수", yest.ads) + adTile("오늘 광고 본 횟수", today.ads);
     drawChart(days);
     let h = "<tr><th>날짜</th><th>새 플레이어</th><th>iOS</th><th>Android</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>환불</th><th>매출</th><th>광고</th><th>주간 보스</th></tr>";
     for (const r of days.slice().reverse()) {
@@ -279,12 +313,15 @@ input[type=password], input[type=text] {
       '<div class="hbar"><span>' + label + '</span><div class="track"><div class="fill" style="width:' +
       (100 * (sb[k] || 0) / mx) + '%' + (sb[k] ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(sb[k]) + "</span></div>").join("");
     const os = d.recent_orders || [];
-    // 결제한 사람: 닉네임 #태그 (닉네임이 없으면 순위표처럼 '보안관 #태그'). 서버가 이름을 안 주면 그 칸은 비움
-    const who = (o) => o.tag ? (o.name ? o.name + " #" + o.tag : "보안관 #" + o.tag) : "";
     $("orders").innerHTML = os.length ? os.map((o) =>
       '<div class="order"><div class="p"><div>' + esc(product(o.product)) + (o.refunded ? " · 환불" : "") + '</div><div class="muted">' +
-      esc([o.at, who(o), o.platform === "ios" ? "iOS" : "Android"].filter(Boolean).join(" · ")) + "</div></div><span>" + won(o.krw) + "</span></div>").join("")
+      esc([o.at, who(o), o.platform === "ios" ? "iOS" : "Android", country(o.country)].filter(Boolean).join(" · ")) + "</div></div><span>" + won(o.krw) + "</span></div>").join("")
       : '<div class="muted">아직 없어요.</div>';
+    // 나라는 스토어 결제 기록에만 있음 (플레이어 전체의 나라는 서버에 없음). 서버가 아직 안 보내면 칸을 숨김
+    const cs = d.buyer_countries || [];
+    $("countryCard").classList.toggle("hide", !cs.length);
+    $("countries").innerHTML = cs.map((c) =>
+      '<div class="order"><div class="p"><div>' + esc(country(c.c)) + "</div></div><span>" + fmt(c.buyers) + "명 · " + won(c.krw) + "</span></div>").join("");
   }
 
   function drawChart(days) {
