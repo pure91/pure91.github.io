@@ -244,7 +244,7 @@ input[type=password], input[type=text] {
 
   function tile(k, v, n) {
     return '<div class="tile"><div class="k">' + esc(k) + '</div><div class="v">' + esc(v) + '</div>' +
-      (n ? '<div class="n">' + esc(n) + '</div>' : "") + "</div>";
+      (n ? '<div class="n">' + esc(n).replace(/\n/g, "<br>") + '</div>' : "") + "</div>";
   }
 
   // 서버 스테이지 값 = 0부터 센 스테이지 번호 ((구역 - 1) × 5 + (스테이지 - 1)) → 게임 순위표처럼 '어려움 8-2'
@@ -263,14 +263,16 @@ input[type=password], input[type=text] {
     ["600-699", "공허"], ["700-799", "종말"], ["800-899", "신화"], ["900-999", "초월"], ["1000+", "무한"]];
   // 서버가 난이도별 칸을 아직 안 보내면 예전처럼 한 줄로
   const STAGE_KEYS_OLD = STAGE_KEYS.slice(0, 3).concat([["200-999", "어려움~초월"], ["1000+", "무한"]]);
-  // 최초 출시일 (App Store 0.1.0, 2026-11-06). 그 전 날짜는 비공개 테스트라 날짜별 표 · 그래프에서 뺌 (사용자 11-10)
-  const LAUNCH = "11-06";
+  // 출시일: 11-06 밤 App Store 0.1.0 이지만 사실상 11-07 부터 (사용자 11-11 '사실상 우리가 6일에 출시했다기보다 7일 출시지?').
+  // 그 전 날짜는 비공개 테스트라 날짜별 표 · 그래프에서 뺌. 서버(43단계)가 launch_day 를 주면 그걸 씀
+  const LAUNCH = "11-07";
 
   let lastDays = [];
   function render(d) {
     $("at").textContent = d.at + " 기준 (한국 시간)";
     const allDays = d.days || [];
-    const launchAt = allDays.findIndex((r) => r.d === LAUNCH);      // 14일 창이 출시일을 지나가면 -1 = 그대로 전부
+    const launchDay = d.launch_day || LAUNCH;
+    const launchAt = allDays.findIndex((r) => r.d === launchDay);      // 14일 창이 출시일을 지나가면 -1 = 그대로 전부
     const days = launchAt > 0 ? allDays.slice(launchAt) : allDays;
     lastDays = days;
     $("chartTitle").textContent = "하루 새 플레이어 (" + (launchAt >= 0 ? "출시일부터" : "최근 14일") + ")";
@@ -301,13 +303,15 @@ input[type=password], input[type=text] {
       tile("최고 스테이지", stageName(d.top_stage), topNote) +
       tile("바로 나감 (최근 3일)", new3 ? Math.round(100 * bounce3 / new3) + "%" : "-",
         "새 계정 " + fmt(new3) + "명 중 " + fmt(bounce3) + "명" +
-        (has(d.launch_accounts) ? " · 출시 후 " + fmt(d.launch_accounts) + "명 중 " + fmt(d.launch_bounces) + "명" : ""));
+        (has(d.launch_accounts) ? "\n출시 후 " + fmt(d.launch_accounts) + "명 중 " + fmt(d.launch_bounces) + "명" : ""));
     $("rev").innerHTML =
       tile("어제 매출", won(yest.krw), paid(yest.orders)) +
       tile("오늘 매출", won(today.krw), paid(today.orders)) +
       tile("최근 7일 매출", won(sum(last7, "krw")), paid(sum(last7, "orders"))) +
       tile("누적 매출", won(d.krw_total), paid(d.orders_total) + (has(d.refunds_total) ? " · 환불 " + fmt(d.refunds_total) + "건" : ""));
-    $("adTiles").innerHTML = adTile("어제 광고 본 횟수", yest.ads) + adTile("오늘 광고 본 횟수", today.ads);
+    // 광고: 최근 7일 (오늘 포함) 합계 + 오늘 (사용자 11-11 '어제 광고 본 횟수는 최근 7일로하는게 더 좋을것같아')
+    const ads7 = last7.some((r) => has(r.ads)) ? sum(last7, "ads") : null;
+    $("adTiles").innerHTML = adTile("최근 7일 광고 본 횟수", ads7) + adTile("오늘 광고 본 횟수", today.ads);
     drawChart(days);
     let h = "<tr><th>날짜</th><th>새 플레이어</th><th>iOS</th><th>Android</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>환불</th><th>매출</th><th>광고</th><th>주간 보스</th></tr>";
     for (const r of days.slice().reverse()) {
