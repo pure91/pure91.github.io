@@ -8,7 +8,7 @@ const STORE = {
 };
 
 const VIDEO_REV = 9; // bump when the clips are re-rendered (5: en/ja/zh-TW = sticker anchor ad too, 6: anchor ad 2 sticker = new content, 7: pantry tower ad, all 14 languages, 8: same picture, new music, 9: end card without the 11.11 date)
-const SHOT_REV = 6, SHOT_COUNT = 9; // screenshots: bump SHOT_REV when they are retaken (6: 11-04 comic-band store set, same 9 as the stores)
+const SHOT_REV = 7, SHOT_COUNT = 9; // screenshots: bump SHOT_REV when they are retaken (6: 11-04 comic-band store set, same 9 as the stores, 7: 11-14 retake with the new crew skins + 54/73 screens)
 const VIDEO_LANGS = { ko: 'ko', ja: 'ja', 'zh-TW': 'zh_TW', 'zh-CN': 'zh_CN', de: 'de', fr: 'fr', es: 'es', 'pt-BR': 'pt_BR', ru: 'ru', id: 'id', ms: 'ms', th: 'th', vi: 'vi' }; // others fall back to English
 const FONTS = {
   ko: 'Jua', ja: 'M+PLUS+Rounded+1c:wght@800', 'zh-TW': 'Noto+Sans+TC:wght@900',
