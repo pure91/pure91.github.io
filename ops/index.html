@@ -77,6 +77,12 @@ button {
 button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
 .card h2 { font-size: 15px; margin: 0 0 10px; }
+.card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin: 0 0 10px; }
+.card-h h2 { margin: 0; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 5px 10px; font-size: 13px; background: transparent; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--accent-soft); color: var(--text); font-weight: 600; }
 .tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 12px; }
 @media (min-width: 620px) { .tiles { grid-template-columns: repeat(3, 1fr); } }
 .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
@@ -158,7 +164,12 @@ input[type=password], input[type=text] {
     </div>
 
     <div class="card">
-      <h2>플레이어 진행도 (최고 스테이지)</h2>
+      <div class="card-h">
+        <h2>플레이어 진행도 (최고 스테이지)</h2>
+        <div class="seg hide" id="stageSeg" role="group" aria-label="접속 기간">
+          <button type="button" data-k="">전체</button><button type="button" data-k="_7d">최근 7일</button><button type="button" data-k="_3d">최근 3일</button>
+        </div>
+      </div>
       <div id="stages"></div>
     </div>
 
@@ -198,7 +209,11 @@ input[type=password], input[type=text] {
   const AD_KRW_PER_VIEW = 65;
   // 스토어 원본의 나라 코드: Apple 은 세 글자(USA), Google 은 두 글자(US)
   const A3 = { USA: "US", KOR: "KR", JPN: "JP", TWN: "TW", HKG: "HK", CAN: "CA", GBR: "GB", DEU: "DE", FRA: "FR", AUS: "AU", NZL: "NZ",
-    BRA: "BR", MEX: "MX", IDN: "ID", THA: "TH", VNM: "VN", MYS: "MY", PHL: "PH", SGP: "SG", RUS: "RU", ESP: "ES", ITA: "IT", ARM: "AM" };
+    BRA: "BR", MEX: "MX", IDN: "ID", THA: "TH", VNM: "VN", MYS: "MY", PHL: "PH", SGP: "SG", RUS: "RU", ESP: "ES", ITA: "IT", ARM: "AM",
+    NLD: "NL", BEL: "BE", CHE: "CH", AUT: "AT", SWE: "SE", NOR: "NO", DNK: "DK", FIN: "FI", POL: "PL", PRT: "PT", IRL: "IE",
+    IND: "IN", TUR: "TR", SAU: "SA", ARE: "AE", ISR: "IL", ZAF: "ZA", ARG: "AR", CHL: "CL", COL: "CO", PER: "PE", UKR: "UA",
+    CZE: "CZ", HUN: "HU", ROU: "RO", GRC: "GR", KAZ: "KZ", MNG: "MN", KHM: "KH", LAO: "LA", MMR: "MM", BGD: "BD", PAK: "PK",
+    EGY: "EG", NGA: "NG", KEN: "KE", MAC: "MO" };
   let regionNames = null;
   try { regionNames = new Intl.DisplayNames(["ko"], { type: "region" }); } catch (e) {}
   function country(c) {
@@ -275,6 +290,38 @@ input[type=password], input[type=text] {
   // 그 전 날짜는 비공개 테스트라 날짜별 표 · 그래프에서 뺌. 서버(43단계)가 launch_day 를 주면 그걸 씀
   const LAUNCH = "11-07";
 
+  // 플레이어 진행도: 전체 · 최근 7일 · 최근 3일 접속 (82단계 서버 stage_buckets_7d · _3d, 사용자 11-15). 고른 칸은 이 기기에만 기억
+  const VIEW_STORE = "acorn_ops_stage_view";
+  let stageView = "_7d";
+  try { const v = localStorage.getItem(VIEW_STORE); if (v === "" || v === "_7d" || v === "_3d") stageView = v; } catch (e) {}
+  let lastData = null;
+  function drawStages() {
+    const d = lastData || {};
+    const hasViews = !!d.stage_buckets_7d;
+    const view = hasViews && d["stage_buckets" + stageView] ? stageView : "";
+    const sb = d["stage_buckets" + view] || {};
+    const stageKeys = "200-299" in sb ? STAGE_KEYS : STAGE_KEYS_OLD;
+    const total = (k) => stageKeys.reduce((a, [s]) => a + ((d["stage_buckets" + k] || {})[s] || 0), 0);
+    $("stageSeg").classList.toggle("hide", !hasViews);
+    $("stageSeg").querySelectorAll("button").forEach((b) => {
+      b.dataset.l = b.dataset.l || b.textContent;
+      b.textContent = b.dataset.l + " " + fmt(total(b.dataset.k)) + "명";
+      b.classList.toggle("on", b.dataset.k === view);
+      b.setAttribute("aria-pressed", b.dataset.k === view ? "true" : "false");
+    });
+    const mx = Math.max(1, ...stageKeys.map(([k]) => sb[k] || 0));
+    $("stages").innerHTML = stageKeys.map(([k, label]) =>
+      '<div class="hbar"><span>' + label + '</span><div class="track"><div class="fill" style="width:' +
+      (100 * (sb[k] || 0) / mx) + '%' + (sb[k] ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(sb[k]) + "</span></div>").join("");
+  }
+  $("stageSeg").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    stageView = b.dataset.k;
+    try { localStorage.setItem(VIEW_STORE, stageView); } catch (err) {}
+    drawStages();
+  });
+
   let lastDays = [];
   function render(d) {
     $("at").textContent = d.at + " 기준 (한국 시간)";
@@ -310,8 +357,8 @@ input[type=password], input[type=text] {
       tile("최근 3일 접속", has(d.active_3d) ? fmt(d.active_3d) : "-", "다음 날 이후 다시 옴 " + fmt(d.came_back) + "명 (" + back + "%)") +
       tile("최고 스테이지", stageName(d.top_stage), topNote) +
       tile("바로 나감 (최근 3일)", new3 ? Math.round(100 * bounce3 / new3) + "%" : "-",
-        "새 계정 " + fmt(new3) + "명 중 " + fmt(bounce3) + "명" +
-        (has(d.launch_accounts) ? "\n출시 후 " + fmt(d.launch_accounts) + "명 중 " + fmt(d.launch_bounces) + "명" : ""));
+        "새 계정 " + fmt(new3) + "개 중 " + fmt(bounce3) + "개" +
+        (has(d.launch_accounts) ? "\n출시 후 계정 " + fmt(d.launch_accounts) + "개 중 " + fmt(d.launch_bounces) + "개" : ""));
     $("rev").innerHTML =
       tile("어제 매출", won(yest.krw), paid(yest.orders)) +
       tile("오늘 매출", won(today.krw), paid(today.orders)) +
@@ -328,12 +375,8 @@ input[type=password], input[type=text] {
         c(r.refunds || 0) + c(r.krw, r.krw ? won(r.krw) : "0") + c(r.ads, has(r.ads) ? fmt(r.ads) : "-") + c(r.wb) + "</tr>";
     }
     $("days").innerHTML = h;
-    const sb = d.stage_buckets || {};
-    const stageKeys = "200-299" in sb ? STAGE_KEYS : STAGE_KEYS_OLD;
-    const mx = Math.max(1, ...stageKeys.map(([k]) => sb[k] || 0));
-    $("stages").innerHTML = stageKeys.map(([k, label]) =>
-      '<div class="hbar"><span>' + label + '</span><div class="track"><div class="fill" style="width:' +
-      (100 * (sb[k] || 0) / mx) + '%' + (sb[k] ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(sb[k]) + "</span></div>").join("");
+    lastData = d;
+    drawStages();
     const os = d.recent_orders || [];
     $("orders").innerHTML = os.length ? os.map((o) =>
       '<div class="order"><div class="p"><div>' + esc(product(o.product)) + (o.refunded ? " · 환불" : "") + '</div><div class="muted">' +
@@ -348,7 +391,13 @@ input[type=password], input[type=text] {
         b.platform === "ios" ? "iOS" : "Android", country(b.country)].filter(Boolean).join(" · ")) + "</div></div><span>" + won(b.krw) + "</span></div>").join("")
       : '<div class="muted">아직 없어요.</div>';
     // 나라는 스토어 결제 기록에만 있음 (플레이어 전체의 나라는 서버에 없음). 서버가 아직 안 보내면 칸을 숨김
-    const cs = d.buyer_countries || [];
+    // Apple(USA) · Google(US) 코드가 따로 와도 한 나라로 합침
+    const cm = new Map();
+    for (const c of d.buyer_countries || []) {
+      const k = A3[c.c] || c.c, o = cm.get(k) || { c: k, buyers: 0, krw: 0 };
+      o.buyers += c.buyers || 0; o.krw += Number(c.krw) || 0; cm.set(k, o);
+    }
+    const cs = [...cm.values()].sort((a, b) => b.krw - a.krw || b.buyers - a.buyers);
     $("countryCard").classList.toggle("hide", !cs.length);
     $("countries").innerHTML = cs.map((c) =>
       '<div class="order"><div class="p"><div>' + esc(country(c.c)) + "</div></div><span>" + fmt(c.buyers) + "명 · " + won(c.krw) + "</span></div>").join("");
