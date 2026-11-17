@@ -128,6 +128,15 @@ input[type=password], input[type=text] {
 .notes { color: var(--text-3); font-size: 12px; line-height: 1.6; margin-top: 18px; }
 .notes p { margin: 4px 0; }
 .hide { display: none; }
+.ptbl th, .ptbl td { padding: 6px 3px; }
+.ptbl th { white-space: normal; word-break: keep-all; vertical-align: bottom; }
+.ptbl td:first-child { white-space: normal; word-break: keep-all; min-width: 112px; }
+.ptbl tr.sec td { padding-top: 14px; font-weight: 600; color: var(--text-2); border-bottom-color: var(--line); }
+.ptbl tr.sec td.zero { color: var(--text-3); }
+.ptbl .new {
+  display: inline-block; margin-left: 4px; padding: 0 4px; border-radius: 5px; background: var(--accent-soft); color: var(--text);
+  font-size: 10.5px; line-height: 16px; font-weight: 600; vertical-align: 1px; white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -174,6 +183,16 @@ input[type=password], input[type=text] {
     </div>
 
     <div class="card">
+      <div class="card-h">
+        <h2>상품별 판매</h2>
+        <div class="seg hide" id="prodSeg" role="group" aria-label="기간">
+          <button type="button" data-k="d1">24시간</button><button type="button" data-k="d7">최근 7일</button><button type="button" data-k="all">전체</button>
+        </div>
+      </div>
+      <div id="prods"></div>
+    </div>
+
+    <div class="card">
       <h2>최근 결제</h2>
       <div id="orders"></div>
     </div>
@@ -198,13 +217,83 @@ input[type=password], input[type=text] {
 (() => {
   const URL_RPC = "https://ptygspcyueotglxzulql.supabase.co/rest/v1/rpc/dash_stats";
   const STORE = "acorn_ops_code";
-  const NAMES = {
-    monthly_card: "월간 카드", ad_free: "광고 제거 + 볼주머니", pass_vip: "VIP 패스", auto_harvest: "알뜰 수확 패키지",
-    auto_pkg: "부지런한 다람쥐 패키지", buff_pkg: "영원한 부스터 패키지", dig_auto_pkg: "두더지 친구 고용 패키지",
-    acorn_basket: "황금 도토리 바구니", acorn_sack: "황금 도토리 자루", gems_1: "보석 한 줌", gems_2: "보석 주머니",
-    gems_3: "보석 상자", gems_4: "보석 금고", gems_5: "보석 마차", weekly_w1: "주간 상품 (무기 1)", weekly_w2: "주간 상품 (무기 2)",
-    weekly_p1: "주간 상품 (펫)", weekly_p2: "주간 상품 (SSS 펫)", vip_time: "VIP 시간", vip_reward: "VIP 보상", vip_convenience: "VIP 편의"
-  };
+  // 상품 이름 · 상점 탭: 게임 data/shop.json 의 이름 그대로 (11-16). 넷째 칸 1 = 55 에서 새로 나온 상품
+  const PROD_SECTIONS = ["일일", "주간", "월간", "패키지", "꾸미기", "특가", "기타"];
+  const CATALOG = [
+    ["starter_pack", "초보자 꾸러미", "일일", 1],
+    ["daily_gems", "하루 보석", "일일", 1],
+    ["daily_pull_s", "뽑기 꾸러미 소", "일일", 1],
+    ["daily_pull_m", "뽑기 꾸러미 중", "일일", 1],
+    ["daily_pull_l", "뽑기 꾸러미 대", "일일", 1],
+    ["grow_s", "키우기 상자 · 소", "일일", 1],
+    ["grow_m", "키우기 상자 · 중", "일일", 1],
+    ["grow_l", "키우기 상자 · 대", "일일", 1],
+    ["weekly_acorn", "주간 황금 도토리", "주간", 1],
+    ["weekly_star_w", "★3 무기 꾸러미", "주간", 1],
+    ["weekly_pull", "주간 뽑기 상자", "주간", 1],
+    ["weekly_star_p", "★3 펫 꾸러미", "주간", 1],
+    ["vip_week", "주간 VIP (7일)", "주간", 1],
+    ["stepup_weapon_1", "무기 특가 1단계", "주간"],
+    ["stepup_weapon_2", "무기 특가 2단계", "주간"],
+    ["stepup_weapon_3", "무기 특가 3단계", "주간"],
+    ["stepup_weapon_4", "무기 특가 4단계", "주간"],
+    ["stepup_weapon_5", "무기 특가 5단계", "주간"],
+    ["stepup_pet_1", "펫 특가 1단계", "주간"],
+    ["stepup_pet_2", "펫 특가 2단계", "주간"],
+    ["stepup_pet_3", "펫 특가 3단계", "주간"],
+    ["stepup_pet_4", "펫 특가 4단계", "주간"],
+    ["stepup_pet_5", "펫 특가 5단계", "주간"],
+    ["stepup_skill_1", "스킬 특가 1단계", "주간"],
+    ["stepup_skill_2", "스킬 특가 2단계", "주간"],
+    ["stepup_skill_3", "스킬 특가 3단계", "주간"],
+    ["stepup_skill_4", "스킬 특가 4단계", "주간"],
+    ["stepup_skill_5", "스킬 특가 5단계", "주간"],
+    ["stepup_skill_6", "스킬 특가 6단계", "주간"],
+    ["stepup_weapon_star_1", "★ 무기 특가 1단계", "주간", 1],
+    ["stepup_weapon_star_2", "★ 무기 특가 2단계", "주간", 1],
+    ["stepup_weapon_star_3", "★ 무기 특가 3단계", "주간", 1],
+    ["stepup_weapon_star_4", "★ 무기 특가 4단계", "주간", 1],
+    ["stepup_weapon_star_5", "★ 무기 특가 5단계", "주간", 1],
+    ["stepup_pet_star_1", "★ 펫 특가 1단계", "주간", 1],
+    ["stepup_pet_star_2", "★ 펫 특가 2단계", "주간", 1],
+    ["stepup_pet_star_3", "★ 펫 특가 3단계", "주간", 1],
+    ["stepup_pet_star_4", "★ 펫 특가 4단계", "주간", 1],
+    ["stepup_pet_star_5", "★ 펫 특가 5단계", "주간", 1],
+    ["weekly_w1", "S 무기 꾸러미", "주간"],
+    ["weekly_w2", "SSS 무기 꾸러미", "주간"],
+    ["weekly_p1", "S 펫 꾸러미", "주간"],
+    ["weekly_p2", "SSS 펫 꾸러미", "주간"],
+    ["vip_time", "시간 패키지 (7일)", "주간"],
+    ["vip_reward", "추가 보상 패키지 (7일)", "주간"],
+    ["vip_convenience", "편의 패키지 (7일)", "주간"],
+    ["monthly_card", "월간 카드", "월간"],
+    ["membership", "보안관 멤버십", "월간", 1],
+    ["monthly_grow", "월간 성장 상자", "월간", 1],
+    ["monthly_king", "월간 왕 상자", "월간", 1],
+    ["ad_free", "광고 제거 + 볼주머니", "패키지"],
+    ["pass_vip", "VIP 패스", "패키지"],
+    ["auto_harvest", "알뜰 수확 패키지", "패키지"],
+    ["auto_pkg", "부지런한 다람쥐 패키지", "패키지"],
+    ["buff_pkg", "영원한 부스터 패키지", "패키지"],
+    ["dig_auto_pkg", "두더지 친구 고용 패키지", "패키지"],
+    ["acorn_basket", "황금 도토리 바구니", "패키지"],
+    ["acorn_sack", "황금 도토리 자루", "패키지"],
+    ["gems_1", "보석 한 줌", "패키지"],
+    ["gems_2", "보석 주머니", "패키지"],
+    ["gems_3", "보석 상자", "패키지"],
+    ["gems_4", "보석 금고", "패키지"],
+    ["gems_5", "보석 마차", "패키지"],
+    ["guild_gift_1", "길드 선물", "패키지"],
+    ["guild_gift_2", "큰 길드 선물", "패키지"],
+    ["pet_looks_all", "펫 색 스킨 모음", "꾸미기"],
+    ["num_styles_all", "피해 숫자 스킨 모음", "꾸미기"],
+    ["note_deco_pack", "노트 꾸미기 꾸러미", "꾸미기"],
+    ["ad_free_sale", "광고 제거 + 볼주머니 (특가)", "특가"],
+    ["wall_pull_1", "벽 돌파 특가 · 뽑기권 10장", "특가"],
+    ["wall_pull_2", "벽 돌파 특가 · 뽑기권 30장", "특가"],
+    ["wall_pull_3", "벽 돌파 특가 · 뽑기권 60장", "특가"]
+  ];
+  const CAT = new Map(CATALOG.map((r) => [r[0], r]));
   // 광고 1회 예상 수입 (원). AdMob 실적에서 잡은 대략값이라 실적이 쌓이면 다시 잡기
   const AD_KRW_PER_VIEW = 65;
   // 스토어 원본의 나라 코드: Apple 은 세 글자(USA), Google 은 두 글자(US)
@@ -225,9 +314,7 @@ input[type=password], input[type=text] {
   const fmt = (n) => Number(n || 0).toLocaleString("ko-KR");
   const won = (n) => fmt(n) + "원";
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const product = (id) => NAMES[id] || (/^stepup_weapon_(\d)$/.test(id) ? "무기 단계 상품 " + id.slice(-1)
-    : /^stepup_pet_(\d)$/.test(id) ? "펫 단계 상품 " + id.slice(-1)
-    : /^stepup_skill_(\d)$/.test(id) ? "스킬 특가 " + id.slice(-1) + "단계" : id);
+  const product = (id) => (CAT.get(id) || [])[1] || id;
 
   function getCode() { try { return localStorage.getItem(STORE) || ""; } catch (e) { return ""; } }
   function setCode(v) { try { v ? localStorage.setItem(STORE, v) : localStorage.removeItem(STORE); } catch (e) {} }
@@ -322,6 +409,53 @@ input[type=password], input[type=text] {
     drawStages();
   });
 
+  // 상품별 판매: 최근 24시간 · 7일 · 전체 (96단계 서버 products, 사용자 11-16 '새 상품이 팔리는지'). 고른 칸은 이 기기에만 기억.
+  // 55 새 상품은 안 팔려도 0 으로 늘 보이고, 나머지는 그 기간에 팔린 것만. 서버가 products 를 아직 안 보내면 '-'
+  const PROD_STORE = "acorn_ops_prod_view";
+  let prodView = "d7";
+  try { const v = localStorage.getItem(PROD_STORE); if (v === "d1" || v === "d7" || v === "all") prodView = v; } catch (e) {}
+  function drawProducts() {
+    const ps = Array.isArray((lastData || {}).products) ? lastData.products : null;
+    $("prodSeg").classList.toggle("hide", !ps);
+    $("prodSeg").querySelectorAll("button").forEach((b) => {
+      b.classList.toggle("on", b.dataset.k === prodView);
+      b.setAttribute("aria-pressed", b.dataset.k === prodView ? "true" : "false");
+    });
+    if (!ps) { $("prods").innerHTML = '<div class="muted">-</div>'; return; }
+    const got = new Map(ps.map((p) => [p.id, p[prodView] || {}]));
+    const groups = new Map(PROD_SECTIONS.map((s) => [s, []]));
+    for (const [id, name, sec, isNew] of CATALOG) {
+      const v = got.get(id) || {};
+      if (isNew || v.orders) groups.get(sec).push({ name, isNew, v });
+    }
+    for (const p of ps) {
+      const v = p[prodView] || {};
+      if (!CAT.has(p.id) && v.orders) groups.get("기타").push({ name: p.id, v });
+    }
+    const c = (n, s) => '<td class="' + (n ? "" : "zero") + '">' + (s === undefined ? fmt(n) : s) + "</td>";
+    // 팔렸는데 0원 = 서버 정가표(stat_price_krw, 88단계)에 아직 값이 없음 → '0' 이 아니라 '-'
+    const krw = (n, orders) => (!n && orders ? '<td class="zero">-</td>' : c(n, n ? won(n) : "0"));
+    let h = "<tr><th>상품</th><th>주문</th><th>구매자</th><th>첫 결제</th><th>매출</th></tr>";
+    for (const [sec, rows] of groups) {
+      if (!rows.length) continue;
+      const sum = (k) => rows.reduce((a, r) => a + (Number(r.v[k]) || 0), 0);
+      const unpriced = rows.some((r) => r.v.orders && !Number(r.v.krw));      // 값 없는 상품이 섞이면 합계도 '-'
+      h += '<tr class="sec"><td>' + sec + "</td>" + c(sum("orders")) + "<td></td><td></td>" + krw(unpriced ? 0 : sum("krw"), sum("orders")) + "</tr>";
+      for (const r of rows) {
+        h += "<tr><td>" + esc(r.name) + (r.isNew ? '<span class="new">새</span>' : "") + "</td>" +
+          c(r.v.orders) + c(r.v.buyers) + c(r.v.first) + krw(Number(r.v.krw) || 0, r.v.orders) + "</tr>";
+      }
+    }
+    $("prods").innerHTML = '<div class="tbl-wrap"><table class="ptbl">' + h + "</table></div>";
+  }
+  $("prodSeg").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    prodView = b.dataset.k;
+    try { localStorage.setItem(PROD_STORE, prodView); } catch (err) {}
+    drawProducts();
+  });
+
   let lastDays = [];
   function render(d) {
     $("at").textContent = d.at + " 기준 (한국 시간)";
@@ -377,6 +511,7 @@ input[type=password], input[type=text] {
     $("days").innerHTML = h;
     lastData = d;
     drawStages();
+    drawProducts();
     const os = d.recent_orders || [];
     $("orders").innerHTML = os.length ? os.map((o) =>
       '<div class="order"><div class="p"><div>' + esc(product(o.product)) + (o.refunded ? " · 환불" : "") + '</div><div class="muted">' +
