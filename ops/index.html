@@ -294,8 +294,8 @@ input[type=password], input[type=text] {
     ["wall_pull_3", "벽 돌파 특가 · 뽑기권 60장", "특가"]
   ];
   const CAT = new Map(CATALOG.map((r) => [r[0], r]));
-  // 광고 1회 예상 수입 (원). AdMob 실적에서 잡은 대략값이라 실적이 쌓이면 다시 잡기
-  const AD_KRW_PER_VIEW = 65;
+  // 광고 1회 예상 수입 (원). 대략값이라 실적이 쌓이면 다시 잡기 (11-10 65원 → 11-17 사용자 '120원으로 계산해줘')
+  const AD_KRW_PER_VIEW = 120;
   // 스토어 원본의 나라 코드: Apple 은 세 글자(USA), Google 은 두 글자(US)
   const A3 = { USA: "US", KOR: "KR", JPN: "JP", TWN: "TW", HKG: "HK", CAN: "CA", GBR: "GB", DEU: "DE", FRA: "FR", AUS: "AU", NZL: "NZ",
     BRA: "BR", MEX: "MX", IDN: "ID", THA: "TH", VNM: "VN", MYS: "MY", PHL: "PH", SGP: "SG", RUS: "RU", ESP: "ES", ITA: "IT", ARM: "AM",
