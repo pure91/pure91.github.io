@@ -454,7 +454,6 @@ input[type=password], input[type=text] {
     lastDays = days;
     $("chartTitle").textContent = "하루 새 플레이어 (" + (launchAt >= 0 ? "출시일부터" : "최근 14일") + ")";
     const today = days[days.length - 1] || {};
-    const back = d.old_enough ? Math.round(100 * d.came_back / d.old_enough) : 0;
     // 27단계 서버 숫자 (지금 접속 중 · 광고 · 환불): 서버가 아직 안 보내면 '-'
     const has = (v) => v !== null && v !== undefined;
     // 결제한 사람 · 최고 스테이지 주인: 닉네임 #태그 (닉네임이 없으면 순위표처럼 '보안관 #태그'). 서버가 이름을 안 주면 그 칸은 비움
@@ -479,13 +478,11 @@ input[type=password], input[type=text] {
       has(d.active_24h) ? "지금 " + fmt(d.online) + "명 · 오늘 " + fmt(d.active_today) + "명 · 최근 3일 " + fmt(d.active_3d) + "명\n" +
         "꾸준히 오는 사람 " + fmt(d.regulars) + "명" : "", "wide");
     $("tiles").innerHTML = realTile +
-      tile("전체 플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android) +
-        "\n다음 날 이후 다시 옴 " + back + "%") +
+      tile("전체 플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android)) +
       tile("오늘 새 플레이어", fmt(today.players), "iOS " + fmt(today.ios) + " · Android " + fmt(today.android)) +
       tile("최고 스테이지", stageName(d.top_stage), topNote) +
       tile("바로 나감 (최근 3일)", new3 ? Math.round(100 * bounce3 / new3) + "%" : "-",
-        "새 계정 " + fmt(new3) + "개 중 " + fmt(bounce3) + "개" +
-        (has(d.launch_accounts) ? "\n출시 후 계정 " + fmt(d.launch_accounts) + "개 중 " + fmt(d.launch_bounces) + "개" : ""));
+        "새 계정 " + fmt(new3) + "개 중 " + fmt(bounce3) + "개");      // '출시 후 계정 …' 줄 · 전체 플레이어의 '다음 날 이후 다시 옴' 은 11-18 뺌 (사용자)
     $("rev").innerHTML =
       tile("어제 매출", won(yest.krw), paid(yest.orders)) +
       tile("오늘 매출", won(today.krw), paid(today.orders)) +
