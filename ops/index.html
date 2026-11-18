@@ -89,7 +89,8 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 .tile .k { color: var(--text-2); font-size: 13px; }
 .tile .v { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-top: 2px; font-variant-numeric: tabular-nums; }
 .tile .n { color: var(--text-3); font-size: 12px; margin-top: 2px; }
-.tile.wide { grid-column: 1 / -1; }      /* 실제 사용자: 줄 하나를 다 씀 (아래 여섯 칸은 2 · 3 칸 줄 그대로) */
+.tile.wide { grid-column: 1 / -1; }      /* 실제 사용자: 줄 하나를 다 씀 (지금 접속 · 최근 3일도 이 칸 아래 줄로, 11-18) */
+@media (min-width: 620px) { #tiles { grid-template-columns: repeat(4, 1fr); } }      /* 남은 네 칸은 한 줄 (휴대폰은 2 × 2) */
 .tiles.four .v { font-size: 22px; }
 @media (min-width: 620px) {
   .tiles.four { grid-template-columns: repeat(4, 1fr); }
@@ -132,12 +133,7 @@ input[type=password], input[type=text] {
 .ptbl th, .ptbl td { padding: 6px 3px; }
 .ptbl th { white-space: normal; word-break: keep-all; vertical-align: bottom; }
 .ptbl td:first-child { white-space: normal; word-break: keep-all; min-width: 112px; }
-.ptbl tr.sec td { padding-top: 14px; font-weight: 600; color: var(--text-2); border-bottom-color: var(--line); }
-.ptbl tr.sec td.zero { color: var(--text-3); }
-.ptbl .new {
-  display: inline-block; margin-left: 4px; padding: 0 4px; border-radius: 5px; background: var(--accent-soft); color: var(--text);
-  font-size: 10.5px; line-height: 16px; font-weight: 600; vertical-align: 1px; white-space: nowrap;
-}
+.ptbl tr.rest td { color: var(--text-2); }
 </style>
 </head>
 <body>
@@ -177,7 +173,7 @@ input[type=password], input[type=text] {
       <div class="card-h">
         <h2>플레이어 진행도 (최고 스테이지)</h2>
         <div class="seg hide" id="stageSeg" role="group" aria-label="접속 기간">
-          <button type="button" data-k="">전체</button><button type="button" data-k="_7d">최근 7일</button><button type="button" data-k="_3d">최근 3일</button>
+          <button type="button" data-k="">전체</button><button type="button" data-k="_7d">최근 7일</button>
         </div>
       </div>
       <div id="stages"></div>
@@ -218,8 +214,7 @@ input[type=password], input[type=text] {
 (() => {
   const URL_RPC = "https://ptygspcyueotglxzulql.supabase.co/rest/v1/rpc/dash_stats";
   const STORE = "acorn_ops_code";
-  // 상품 이름 · 상점 탭: 게임 data/shop.json 의 이름 그대로 (11-16). 넷째 칸 1 = 55 에서 새로 나온 상품
-  const PROD_SECTIONS = ["일일", "주간", "월간", "패키지", "꾸미기", "특가", "기타"];
+  // 상품 이름: 게임 data/shop.json 의 이름 그대로 (11-16). 셋째 · 넷째 칸(상점 탭 · 55 새 상품)은 11-18 부터 화면에 안 씀
   const CATALOG = [
     ["starter_pack", "초보자 꾸러미", "일일", 1],
     ["daily_gems", "하루 보석", "일일", 1],
@@ -372,23 +367,21 @@ input[type=password], input[type=text] {
   const STAGE_KEYS = [["1-9", "쉬움 1~2구역"], ["10-49", "쉬움 3~10구역"], ["50-199", "쉬움 11~보통 20"],
     ["200-299", "어려움"], ["300-399", "매우 어려움"], ["400-499", "지옥"], ["500-599", "심연"],
     ["600-699", "공허"], ["700-799", "종말"], ["800-899", "신화"], ["900-999", "초월"], ["1000+", "무한"]];
-  // 서버가 난이도별 칸을 아직 안 보내면 예전처럼 한 줄로
-  const STAGE_KEYS_OLD = STAGE_KEYS.slice(0, 3).concat([["200-999", "어려움~초월"], ["1000+", "무한"]]);
   // 출시일: 11-06 밤 App Store 0.1.0 이지만 사실상 11-07 부터 (사용자 11-11 '사실상 우리가 6일에 출시했다기보다 7일 출시지?').
   // 그 전 날짜는 비공개 테스트라 날짜별 표 · 그래프에서 뺌. 서버(43단계)가 launch_day 를 주면 그걸 씀
   const LAUNCH = "11-07";
 
-  // 플레이어 진행도: 전체 · 최근 7일 · 최근 3일 접속 (82단계 서버 stage_buckets_7d · _3d, 사용자 11-15). 고른 칸은 이 기기에만 기억
+  // 플레이어 진행도: 전체 · 최근 7일 접속 (82단계 서버 stage_buckets_7d, 사용자 11-15; 최근 3일은 11-18 뺌). 고른 칸은 이 기기에만 기억
   const VIEW_STORE = "acorn_ops_stage_view";
   let stageView = "_7d";
-  try { const v = localStorage.getItem(VIEW_STORE); if (v === "" || v === "_7d" || v === "_3d") stageView = v; } catch (e) {}
+  try { const v = localStorage.getItem(VIEW_STORE); if (v === "" || v === "_7d") stageView = v; } catch (e) {}
   let lastData = null;
   function drawStages() {
     const d = lastData || {};
     const hasViews = !!d.stage_buckets_7d;
     const view = hasViews && d["stage_buckets" + stageView] ? stageView : "";
     const sb = d["stage_buckets" + view] || {};
-    const stageKeys = "200-299" in sb ? STAGE_KEYS : STAGE_KEYS_OLD;
+    const stageKeys = STAGE_KEYS;
     const total = (k) => stageKeys.reduce((a, [s]) => a + ((d["stage_buckets" + k] || {})[s] || 0), 0);
     $("stageSeg").classList.toggle("hide", !hasViews);
     $("stageSeg").querySelectorAll("button").forEach((b) => {
@@ -410,9 +403,10 @@ input[type=password], input[type=text] {
     drawStages();
   });
 
-  // 상품별 판매: 최근 24시간 · 7일 · 전체 (96단계 서버 products, 사용자 11-16 '새 상품이 팔리는지'). 고른 칸은 이 기기에만 기억.
-  // 55 새 상품은 안 팔려도 0 으로 늘 보이고, 나머지는 그 기간에 팔린 것만. 서버가 products 를 아직 안 보내면 '-'
+  // 상품별 판매: 최근 24시간 · 7일 · 전체 (96단계 서버 products). 고른 칸은 이 기기에만 기억.
+  // 그 기간에 팔린 상품만 매출 큰 순으로 10개, 나머지는 '그 밖 N개' 한 줄 (사용자 11-18 '너무 상품별로 다안보여줘도돼')
   const PROD_STORE = "acorn_ops_prod_view";
+  const PROD_TOP = 10;
   let prodView = "d7";
   try { const v = localStorage.getItem(PROD_STORE); if (v === "d1" || v === "d7" || v === "all") prodView = v; } catch (e) {}
   function drawProducts() {
@@ -423,29 +417,22 @@ input[type=password], input[type=text] {
       b.setAttribute("aria-pressed", b.dataset.k === prodView ? "true" : "false");
     });
     if (!ps) { $("prods").innerHTML = '<div class="muted">-</div>'; return; }
-    const got = new Map(ps.map((p) => [p.id, p[prodView] || {}]));
-    const groups = new Map(PROD_SECTIONS.map((s) => [s, []]));
-    for (const [id, name, sec, isNew] of CATALOG) {
-      const v = got.get(id) || {};
-      if (isNew || v.orders) groups.get(sec).push({ name, isNew, v });
-    }
-    for (const p of ps) {
-      const v = p[prodView] || {};
-      if (!CAT.has(p.id) && v.orders) groups.get("기타").push({ name: p.id, v });
-    }
+    const rows = ps.map((p) => ({ id: p.id, v: p[prodView] || {} })).filter((r) => r.v.orders)
+      .sort((a, b) => (Number(b.v.krw) || 0) - (Number(a.v.krw) || 0) || (b.v.orders || 0) - (a.v.orders || 0));
+    if (!rows.length) { $("prods").innerHTML = '<div class="muted">아직 없어요.</div>'; return; }
     const c = (n, s) => '<td class="' + (n ? "" : "zero") + '">' + (s === undefined ? fmt(n) : s) + "</td>";
-    // 팔렸는데 0원 = 서버 정가표(stat_price_krw, 88단계)에 아직 값이 없음 → '0' 이 아니라 '-'
+    // 팔렸는데 0원 = 서버 정가표(stat_price_krw)에 아직 값이 없음 → '0' 이 아니라 '-'
     const krw = (n, orders) => (!n && orders ? '<td class="zero">-</td>' : c(n, n ? won(n) : "0"));
-    let h = "<tr><th>상품</th><th>주문</th><th>구매자</th><th>첫 결제</th><th>매출</th></tr>";
-    for (const [sec, rows] of groups) {
-      if (!rows.length) continue;
-      const sum = (k) => rows.reduce((a, r) => a + (Number(r.v[k]) || 0), 0);
-      const unpriced = rows.some((r) => r.v.orders && !Number(r.v.krw));      // 값 없는 상품이 섞이면 합계도 '-'
-      h += '<tr class="sec"><td>' + sec + "</td>" + c(sum("orders")) + "<td></td><td></td>" + krw(unpriced ? 0 : sum("krw"), sum("orders")) + "</tr>";
-      for (const r of rows) {
-        h += "<tr><td>" + esc(r.name) + (r.isNew ? '<span class="new">새</span>' : "") + "</td>" +
-          c(r.v.orders) + c(r.v.buyers) + c(r.v.first) + krw(Number(r.v.krw) || 0, r.v.orders) + "</tr>";
-      }
+    let h = "<tr><th>상품</th><th>주문</th><th>구매자</th><th>매출</th></tr>";
+    for (const r of rows.slice(0, PROD_TOP)) {
+      h += "<tr><td>" + esc(product(r.id)) + "</td>" + c(r.v.orders) + c(r.v.buyers) + krw(Number(r.v.krw) || 0, r.v.orders) + "</tr>";
+    }
+    const rest = rows.slice(PROD_TOP);
+    if (rest.length) {
+      const orders = rest.reduce((a, r) => a + (r.v.orders || 0), 0);
+      const unpriced = rest.some((r) => !Number(r.v.krw));      // 값 없는 상품이 섞이면 합도 '-'
+      h += '<tr class="rest"><td>그 밖 ' + rest.length + "개</td>" + c(orders) + "<td></td>" +
+        krw(unpriced ? 0 : rest.reduce((a, r) => a + (Number(r.v.krw) || 0), 0), orders) + "</tr>";
     }
     $("prods").innerHTML = '<div class="tbl-wrap"><table class="ptbl">' + h + "</table></div>";
   }
@@ -486,14 +473,15 @@ input[type=password], input[type=text] {
     const topNote = !has(d.top_stage) ? "" :
       [who({ name: d.top_name, tag: d.top_tag }), fmt(stageZone(Math.floor(d.top_stage))) + "구역"].filter(Boolean).join(" · ");
     // 실제 사용자 (서버 108단계, 사용자 11-18 '정말 실제 사용자들 몇명인지 … 대략적으로'): 전체 플레이어와 같은 사람(테스트 · 바로 나감 빼고) 중
-    // 최근 24시간에 들어온 사람. 아래 = 오늘(한국 날짜) · 꾸준히 오는 사람(그저께 이전에 시작해 어제나 오늘 또 옴)
+    // 최근 24시간에 들어온 사람. 아래 = 지금(5분) · 오늘(한국 날짜) · 최근 3일 · 꾸준히 오는 사람(그저께 이전에 시작해 어제나 오늘 또 옴).
+    // 따로 있던 '지금 접속 중' · '최근 3일 접속' 칸은 같은 '들어온 사람' 숫자라 여기로 합침 (사용자 11-18 '중복 내용이거나 … 없어도돼')
     const realTile = tile("실제 사용자 (최근 24시간)", has(d.active_24h) ? fmt(d.active_24h) + "명" : "-",
-      has(d.active_24h) ? "오늘 " + fmt(d.active_today) + "명 · 꾸준히 오는 사람 " + fmt(d.regulars) + "명" : "", "wide");
+      has(d.active_24h) ? "지금 " + fmt(d.online) + "명 · 오늘 " + fmt(d.active_today) + "명 · 최근 3일 " + fmt(d.active_3d) + "명\n" +
+        "꾸준히 오는 사람 " + fmt(d.regulars) + "명" : "", "wide");
     $("tiles").innerHTML = realTile +
-      tile("전체 플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android)) +
+      tile("전체 플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android) +
+        "\n다음 날 이후 다시 옴 " + back + "%") +
       tile("오늘 새 플레이어", fmt(today.players), "iOS " + fmt(today.ios) + " · Android " + fmt(today.android)) +
-      tile("지금 접속 중", has(d.online) ? fmt(d.online) : "-", "최근 5분") +
-      tile("최근 3일 접속", has(d.active_3d) ? fmt(d.active_3d) : "-", "다음 날 이후 다시 옴 " + fmt(d.came_back) + "명 (" + back + "%)") +
       tile("최고 스테이지", stageName(d.top_stage), topNote) +
       tile("바로 나감 (최근 3일)", new3 ? Math.round(100 * bounce3 / new3) + "%" : "-",
         "새 계정 " + fmt(new3) + "개 중 " + fmt(bounce3) + "개" +
@@ -507,10 +495,10 @@ input[type=password], input[type=text] {
     const ads7 = last7.some((r) => has(r.ads)) ? sum(last7, "ads") : null;
     $("adTiles").innerHTML = adTile("최근 7일 광고 본 횟수", ads7) + adTile("오늘 광고 본 횟수", today.ads);
     drawChart(days);
-    let h = "<tr><th>날짜</th><th>새 플레이어</th><th>iOS</th><th>Android</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>환불</th><th>매출</th><th>광고</th><th>주간 보스</th></tr>";
+    let h = "<tr><th>날짜</th><th>새 플레이어</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>환불</th><th>매출</th><th>광고</th><th>주간 보스</th></tr>";
     for (const r of days.slice().reverse()) {
       const c = (v, s) => '<td class="' + (v ? "" : "zero") + '">' + (s === undefined ? fmt(v) : s) + "</td>";
-      h += "<tr><td>" + esc(r.d) + "</td>" + c(r.players) + c(r.ios || 0) + c(r.android || 0) + c(r.bounces) + c(r.returning) + c(r.orders) +
+      h += "<tr><td>" + esc(r.d) + "</td>" + c(r.players) + c(r.bounces) + c(r.returning) + c(r.orders) +
         c(r.refunds || 0) + c(r.krw, r.krw ? won(r.krw) : "0") + c(r.ads, has(r.ads) ? fmt(r.ads) : "-") + c(r.wb) + "</tr>";
     }
     $("days").innerHTML = h;
