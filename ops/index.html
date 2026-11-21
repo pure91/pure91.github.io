@@ -27,6 +27,8 @@
   --s1: #2a78d6;
   --s2: #eb6834;
   --bad: #c03a2b;
+  --good: #1f8a4c;
+  --hero: #e6effb;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -43,6 +45,8 @@
     --s1: #3987e5;
     --s2: #d95926;
     --bad: #e66767;
+    --good: #4cc27e;
+    --hero: #1b2839;
   }
 }
 :root[data-theme="dark"] {
@@ -59,6 +63,8 @@
   --s1: #3987e5;
   --s2: #d95926;
   --bad: #e66767;
+  --good: #4cc27e;
+  --hero: #1b2839;
 }
 * { box-sizing: border-box; }
 body {
@@ -134,6 +140,31 @@ input[type=password], input[type=text] {
 .ptbl th { white-space: normal; word-break: keep-all; vertical-align: bottom; }
 .ptbl td:first-child { white-space: normal; word-break: keep-all; min-width: 112px; }
 .ptbl tr.rest td { color: var(--text-2); }
+/* 맨 위 강조: 지금 · 오늘 · 꾸준히 (사용자 11-21 '현재 접속자 오늘 접속자 꾸준히 오는사람 등 강조할것들 잘보이게') */
+.hero-card { background: var(--hero); border-color: transparent; padding: 14px 14px 12px; }
+.hero { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hero > div { min-width: 0; }
+.hero .k { color: var(--text-2); font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hero .v { font-size: 34px; font-weight: 800; letter-spacing: -1px; line-height: 1.15; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.hero .v small { font-size: 15px; font-weight: 600; margin-left: 1px; letter-spacing: 0; }
+.hero .n { color: var(--text-3); font-size: 12px; margin-top: 1px; }
+.hero-sub { border-top: 1px solid var(--line); margin-top: 10px; padding-top: 8px; font-size: 13px; color: var(--text-2); line-height: 1.6; }
+.hero-sub b { color: var(--text); font-variant-numeric: tabular-nums; }
+.live { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--good); margin-right: 5px; vertical-align: 1px; }
+.live.off { background: var(--text-3); }
+@media (max-width: 420px) { .hero .v { font-size: 28px; } .hero .k { font-size: 12px; } }
+.hbar .pct { color: var(--text-3); font-size: 12px; margin-left: 4px; }
+.hbar.quit { grid-template-columns: 128px 1fr 64px; }
+.hbar.quit .fill { background: var(--s2); }
+.hbar .tag { display: inline-block; font-size: 11px; color: var(--s2); border: 1px solid currentColor; border-radius: 6px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; }
+.pill { display: inline-block; font-size: 12px; border-radius: 8px; padding: 1px 7px; background: var(--grid); color: var(--text-2); white-space: nowrap; }
+.pill.bad { color: var(--bad); }
+.kv { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--grid); font-size: 13px; }
+.kv:last-child { border-bottom: 0; }
+.kv > span:first-child { color: var(--text-2); }
+.kv > span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.kv .bad { color: var(--bad); font-weight: 600; }
+.kv a { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -154,6 +185,7 @@ input[type=password], input[type=text] {
   </div>
 
   <div id="main" class="hide">
+    <div class="card hero-card" id="hero"></div>
     <div class="tiles" id="tiles"></div>
     <div class="tiles four" id="rev"></div>
     <div class="tiles two" id="adTiles"></div>
@@ -167,6 +199,12 @@ input[type=password], input[type=text] {
     <div class="card">
       <h2>날짜별</h2>
       <div class="tbl-wrap"><table id="days"></table></div>
+    </div>
+
+    <div class="card hide" id="quitCard">
+      <h2>어디서 그만두나 (최근 7일 새 계정)</h2>
+      <div class="muted" id="quitNote"></div>
+      <div id="quit"></div>
     </div>
 
     <div class="card">
@@ -194,6 +232,11 @@ input[type=password], input[type=text] {
       <div id="orders"></div>
     </div>
 
+    <div class="card hide" id="refundCard">
+      <h2>환불</h2>
+      <div id="refunds"></div>
+    </div>
+
     <div class="card hide" id="buyerCard">
       <h2>많이 결제한 다람쥐</h2>
       <div id="buyers"></div>
@@ -202,6 +245,11 @@ input[type=password], input[type=text] {
     <div class="card hide" id="countryCard">
       <h2>결제한 나라</h2>
       <div id="countries"></div>
+    </div>
+
+    <div class="card hide" id="healthCard">
+      <h2>서버 상태</h2>
+      <div id="health"></div>
     </div>
 
     <div class="notes">
@@ -444,6 +492,69 @@ input[type=password], input[type=text] {
     drawProducts();
   });
 
+  // 어디서 그만두나 (139단계 서버 quit, 사용자 11-21 '바로 나감이라는건 어느구역에서 나가는걸 말하는지'):
+  // 가입 1~8일 전 새 계정 중 24시간 넘게 안 온 계정을 가장 멀리 간 곳(스테이지 순위 기록)으로 나눔. 맨 위 두 줄이 '바로 나감'
+  const QUIT_ROWS = [["nosave", "켜고 바로 나감"], ["z1_1", "1-1 하다 나감"], ["z1", "1구역 (1-2~1-5)"], ["z2", "2구역"], ["z3", "3구역"],
+    ["z4_5", "4~5구역"], ["z6_10", "6~10구역"], ["z11_20", "11~20구역"], ["z21", "21구역~"]];
+  function drawQuit(q) {
+    $("quitCard").classList.toggle("hide", !q);
+    if (!q) return;
+    const gone = Math.max(0, (q.n || 0) - (q.here || 0));
+    const mx = Math.max(1, ...QUIT_ROWS.map(([k]) => q[k] || 0));
+    $("quitNote").innerHTML = esc("새 계정 " + fmt(q.n) + "개 중 24시간 넘게 안 온 " + fmt(gone) + "개 · 아직 오는 " + fmt(q.here) + "개") +
+      "<br>" + esc("맨 위 두 줄 = 바로 나감 (첫 스테이지 1-1 을 못 깸)");
+    $("quit").innerHTML = QUIT_ROWS.map(([k, label]) => {
+      const v = q[k] || 0;
+      return '<div class="hbar quit"><span>' + esc(label) + '</span><div class="track"><div class="fill" style="width:' + (100 * v / mx) + "%" +
+        (v ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(v) + '<span class="pct">' + (gone ? Math.round(100 * v / gone) : 0) + "%</span></span></div>";
+    }).join("");
+  }
+
+  // 환불 (139단계 서버 refunds, 사용자 11-21 '무엇이 환불된건지 누가 언제 환불한건지'): 최근 10건.
+  // 회수 = 그 사람이 앱을 열 때 게임이 받은 것을 되가져감 (get_refunds → ack_refund). '회수 전' = 환불 뒤 아직 앱을 안 열었음
+  const G_REASON = ["기타", "구매 후회", "못 받음", "불량", "실수로 구매", "사기", "본인 결제 부인", "카드사 지급 거절"];      // Google voidedReason 0~7
+  const G_SOURCE = ["사용자가 요청", "개발자가 환불", "Google 이 처리"];                                                      // Google voidedSource 0~2
+  function refundWhy(r) {
+    if (r.platform === "ios") {
+      if (r.kind === "REVOKE") return "가족 공유에서 빠짐 (Apple)";
+      return "사유: " + (String(r.reason) === "1" ? "앱 문제" : "기타 (실수로 산 것 등)") + " · Apple 이 환불";      // revocationReason 1 / 0
+    }
+    const why = G_REASON[Number(r.reason)], src = G_SOURCE[Number(r.source)];
+    return [why ? "사유: " + why : "", src || ""].filter(Boolean).join(" · ");
+  }
+  function drawRefunds(rf, who) {
+    $("refundCard").classList.toggle("hide", !Array.isArray(rf));
+    if (!Array.isArray(rf)) return;
+    $("refunds").innerHTML = rf.length ? rf.map((r) =>
+      '<div class="order"><div class="p"><div>' + esc(product(r.product)) + ' <span class="pill">' + (r.revoked ? "회수함" : "회수 전") + "</span></div>" +
+      '<div class="muted w">' + esc(["환불 " + r.at, "산 때 " + r.bought].join(" · ")) + "</div>" +
+      '<div class="muted w">' + esc([who(r) || "지운 계정", r.platform === "ios" ? "iOS" : "Android", country(r.country)].filter(Boolean).join(" · ")) + "</div>" +
+      '<div class="muted w">' + esc(refundWhy(r)) + "</div></div><span>" + won(r.krw) + "</span></div>").join("")
+      : '<div class="muted">아직 없어요.</div>';
+  }
+
+  // 서버 상태 (139단계 서버 health, 사용자 11-21 '메모리 부하율이나 서버 상태나 … 부하를 오게하는건 안되니까').
+  // 60초 캐시 안에서 이미 있는 통계만 읽음. CPU · 메모리는 SQL 로 못 읽어서 Supabase 보고서 링크만
+  const SUPA_REPORT = "https://supabase.com/dashboard/project/ptygspcyueotglxzulql/observability/database";
+  function drawHealth(h) {
+    $("healthCard").classList.toggle("hide", !h);
+    if (!h) return;
+    const has = (v) => v !== null && v !== undefined;
+    const ago = (s) => (s < 60 ? s + "초 전" : s < 3600 ? Math.floor(s / 60) + "분 전" : Math.floor(s / 3600) + "시간 전");
+    const kv = (k, v, bad) => '<div class="kv"><span>' + esc(k) + "</span><span" + (bad ? ' class="bad"' : "") + ">" + v + "</span></div>";
+    const mb = h.min_build || {};
+    $("health").innerHTML =
+      kv("게임 저장 받기", has(h.last_save_s) ? "마지막 " + esc(ago(h.last_save_s)) : "-", h.last_save_s > 1800) +
+      kv("점검 모드", h.maintenance ? "켜짐" : "꺼짐", !!h.maintenance) +
+      kv("DB 연결", fmt(h.conn) + " / " + fmt(h.conn_max) + " (일하는 중 " + fmt(h.conn_active) + ")", h.conn > h.conn_max * 0.8) +
+      kv("DB 크기", has(h.db_mb) ? "약 " + esc(h.db_mb) + " MB" : "-") +
+      kv("캐시 적중", has(h.cache_hit) ? esc(h.cache_hit) + "%" + (h.since ? " (" + esc(h.since) + "부터)" : "") : "-", has(h.cache_hit) && h.cache_hit < 99) +
+      kv("교착 (서로 막힘)", fmt(h.deadlocks) + "건", h.deadlocks > 0) +
+      kv("서버 켜진 지", fmt(h.up_days) + "일") +
+      kv("강제 업데이트 기준", "Android " + esc(has(mb.android) ? mb.android : "-") + " · iOS " + esc(has(mb.ios) ? mb.ios : "-")) +
+      kv("CPU · 메모리", '<a href="' + SUPA_REPORT + '" target="_blank" rel="noopener noreferrer">Supabase 보고서</a>');
+  }
+
   let lastDays = [];
   function render(d) {
     $("at").textContent = d.at + " 기준 (한국 시간)";
@@ -471,18 +582,30 @@ input[type=password], input[type=text] {
     const adTile = (k, n) => tile(k, has(n) ? fmt(n) : "-", has(n) ? "예상 매출 약 " + won(Math.round(n * AD_KRW_PER_VIEW / 10) * 10) : "");
     const topNote = !has(d.top_stage) ? "" :
       [who({ name: d.top_name, tag: d.top_tag }), fmt(stageZone(Math.floor(d.top_stage))) + "구역"].filter(Boolean).join(" · ");
-    // 실제 사용자 (서버 108단계, 사용자 11-18 '정말 실제 사용자들 몇명인지 … 대략적으로'): 전체 플레이어와 같은 사람(테스트 · 바로 나감 빼고) 중
-    // 최근 24시간에 들어온 사람. 아래 = 지금(5분) · 오늘(한국 날짜) · 최근 3일 · 꾸준히 오는 사람(그저께 이전에 시작해 어제나 오늘 또 옴).
-    // 따로 있던 '지금 접속 중' · '최근 3일 접속' 칸은 같은 '들어온 사람' 숫자라 여기로 합침 (사용자 11-18 '중복 내용이거나 … 없어도돼')
-    const realTile = tile("실제 사용자 (최근 24시간)", has(d.active_24h) ? fmt(d.active_24h) + "명" : "-",
-      has(d.active_24h) ? "지금 " + fmt(d.online) + "명 · 오늘 " + fmt(d.active_today) + "명 · 최근 3일 " + fmt(d.active_3d) + "명\n" +
-        "꾸준히 오는 사람 " + fmt(d.regulars) + "명" : "", "wide");
-    $("tiles").innerHTML = realTile +
+    // 맨 위 강조 세 숫자 (사용자 11-21 '현재 접속자 오늘 접속자 꾸준히 오는사람 등 강조할것들 잘보이게'):
+    //   지금 접속 중 = 최근 5분 안에 게임이 저장을 올린 계정 (켜 두면 2분마다 올림) · 오늘 접속 = 오늘(한국 날짜) 들어온 플레이어 (1-1 깬 계정) ·
+    //   꾸준히 오는 사람 = 최근 7일 중 3일 이상 들어온 플레이어 (139단계 서버 regulars_3of7. 서버가 아직 안 주면 108단계 '어제나 오늘 또 옴').
+    // 아래 줄 = 최근 24시간 · 최근 3일 (108단계) + 다음 날 · 7일째 또 온 비율 (139단계 d1 · d7: 그저께 · 8일 전 새 계정 중 어제 또 들어온 계정)
+    const pct = (o) => (o && o.n ? Math.round(100 * o.back / o.n) + "%" : "-");
+    const reg3 = has(d.regulars_3of7);
+    const big = (k, v, n, live) => '<div><div class="k">' + (live === undefined ? "" : '<i class="live' + (live ? "" : " off") + '"></i>') + esc(k) +
+      '</div><div class="v">' + (has(v) ? fmt(v) + "<small>명</small>" : "-") + '</div><div class="n">' + esc(n) + "</div></div>";
+    let sub = "최근 24시간 <b>" + (has(d.active_24h) ? fmt(d.active_24h) + "명" : "-") + "</b> · 최근 3일 <b>" + (has(d.active_3d) ? fmt(d.active_3d) + "명" : "-") + "</b>";
+    if (d.d1 || d.d7) {
+      sub += "<br>다음 날 또 옴 <b>" + pct(d.d1) + "</b>" + (d.d1 ? " (그저께 새 계정 " + fmt(d.d1.n) + "개 중 " + fmt(d.d1.back) + "개)" : "") +
+        " · 7일째 또 옴 <b>" + pct(d.d7) + "</b>" + (d.d7 ? " (" + fmt(d.d7.n) + "개 중 " + fmt(d.d7.back) + "개)" : "");
+    }
+    $("hero").innerHTML = '<div class="hero">' +
+      big("지금 접속 중", d.online, "최근 5분", (d.online || 0) > 0) +
+      big("오늘 접속", d.active_today, "오늘 들어온 사람") +
+      big("꾸준히 오는 사람", reg3 ? d.regulars_3of7 : d.regulars, reg3 ? "7일 중 3일 이상" : "어제나 오늘 또 옴") +
+      '</div><div class="hero-sub">' + sub + "</div>";
+    $("tiles").innerHTML =
       tile("전체 플레이어", fmt(d.players), "iOS " + fmt(d.players_ios) + " · Android " + fmt(d.players_android)) +
       tile("오늘 새 플레이어", fmt(today.players), "iOS " + fmt(today.ios) + " · Android " + fmt(today.android)) +
       tile("최고 스테이지", stageName(d.top_stage), topNote) +
       tile("바로 나감 (최근 3일)", new3 ? Math.round(100 * bounce3 / new3) + "%" : "-",
-        "새 계정 " + fmt(new3) + "개 중 " + fmt(bounce3) + "개");      // '출시 후 계정 …' 줄 · 전체 플레이어의 '다음 날 이후 다시 옴' 은 11-18 뺌 (사용자)
+        "1-1 을 깨기 전에 나감\n새 계정 " + fmt(new3) + "개 중 " + fmt(bounce3) + "개");      // 사용자 11-21 '바로 나감이라는건 어느구역에서 나가는걸 말하는지'
     $("rev").innerHTML =
       tile("어제 매출", won(yest.krw), paid(yest.orders)) +
       tile("오늘 매출", won(today.krw), paid(today.orders)) +
@@ -500,8 +623,11 @@ input[type=password], input[type=text] {
     }
     $("days").innerHTML = h;
     lastData = d;
+    drawQuit(d.quit);
     drawStages();
     drawProducts();
+    drawRefunds(d.refunds, who);
+    drawHealth(d.health);
     const os = d.recent_orders || [];
     $("orders").innerHTML = os.length ? os.map((o) =>
       '<div class="order"><div class="p"><div>' + esc(product(o.product)) + (o.refunded ? " · 환불" : "") + '</div><div class="muted">' +
