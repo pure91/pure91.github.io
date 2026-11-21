@@ -109,6 +109,9 @@ function render(tpl, k) {
   h = h.replace(/(<span data-mode="(\d+)">)[^<]*(<\/span>)/g, (m, a, i, b) => `${a}${esc(t.modes[+i] || '')}${b}`);
   h = h.replace(/(<span data-chip="(\d+)">)[^<]*(<\/span>)/g, (m, a, i, b) => `${a}${esc(t.wbChips[+i] || '')}${b}`);
   h = sub(h, /(<span id="langCur">)[^<]*(<\/span>)/, (m, a, b) => `${a}${esc(t.native)}${b}`, 'langCur');
+  // Korean blog /ko/blog/ (raccoon-sheriff tools/make_site_blog.py): footer link on /ko/ once a post exists
+  if (k === 'ko' && fs.existsSync(path.join(ROOT, 'ko/blog/posts.json')))
+    h = sub(h, /(<nav class="links">\n)/, m => `${m}    <a href="/ko/blog/">블로그</a>\n`, 'footer links');
   return h;
 }
 
@@ -117,7 +120,14 @@ function sitemap() {
   const alt = LANGS.map(k => `    <xhtml:link rel="alternate" hreflang="${k}" href="${pageUrl(k)}"/>`)
     .concat(`    <xhtml:link rel="alternate" hreflang="x-default" href="${SITE}/"/>`).join('\n');
   const urls = LANGS.map(k => `  <url>\n    <loc>${pageUrl(k)}</loc>\n    <lastmod>${day}</lastmod>\n${alt}\n  </url>`).join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n</urlset>\n`;
+  // blog posts (written by raccoon-sheriff tools/make_site_blog.py into ko/blog/posts.json) keep their lines here too
+  let blog = '';
+  if (fs.existsSync(path.join(ROOT, 'ko/blog/posts.json'))) {
+    const posts = JSON.parse(read('ko/blog/posts.json'));
+    const u = (loc, mod) => `  <url>\n    <loc>${SITE}${loc}</loc>\n    <lastmod>${mod}</lastmod>\n  </url>\n`;
+    blog = (posts.length ? u('/ko/blog/', posts[0].date) : '') + posts.map(p => u(`/ko/blog/${p.id}/`, p.modified || p.date)).join('');
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n${blog}</urlset>\n`;
 }
 
 // /go/: one link to share (KakaoTalk etc.). The preview reads the Korean OG tags here (scrapers don't run JS);
