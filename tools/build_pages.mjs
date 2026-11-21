@@ -33,6 +33,8 @@ vm.runInNewContext(read('i18n.js'), ctx);
 const I18N = ctx.window.I18N;
 const LANGS = Object.keys(I18N);
 const STORE = vm.runInNewContext(read('main.js').match(/const STORE = \{[\s\S]*?\n\};/)[0] + '\nSTORE', {});
+// language web fonts (ko: Jua …): the same table main.js uses when the language is switched on the page
+const FONTS = vm.runInNewContext(read('main.js').match(/const FONTS = \{[\s\S]*?\n\};/)[0] + '\nFONTS', {});
 
 const slug = k => (k === 'en' ? '' : k.toLowerCase());
 const pageUrl = k => `${SITE}/${slug(k) ? slug(k) + '/' : ''}`;
@@ -103,6 +105,12 @@ function render(tpl, k) {
   h = h.replace(/<link rel="alternate" hreflang="[^"]*" href="[^"]*">\n/g, '');
   h = sub(h, /<link rel="canonical" href="[^"]*">/, () => `${alternates()}\n<link rel="canonical" href="${pageUrl(k)}">`, 'canonical');
   h = sub(h, /(<script type="application\/ld\+json">)[\s\S]*?(<\/script>)/, (m, a, b) => `${a}${jsonLd(k)}${b}`, 'ld+json');
+  // the page's own font in <head>, fetched with the first CSS. Before, main.js (end of <body>) asked for it late, so the
+  // hero was drawn in the system font first and then jumped to Jua (user 11-21 '/go/ 들어가면 hero 글자가 깜빡하면서 다른 폰트로').
+  // display=block: the text waits (up to ~3 s) for its font instead of showing another one first. id = what main.js loadFont() checks.
+  if (FONTS[k])
+    h = sub(h, /(<link rel="stylesheet" href="https:\/\/fonts\.googleapis\.com\/css2\?family=Nunito[^"]*">\n)/,
+      m => `${m}<link rel="stylesheet" id="font-${k}" href="https://fonts.googleapis.com/css2?family=${FONTS[k]}&display=block">\n`, 'nunito link');
   // page text (same fields main.js apply() fills)
   h = h.replace(/(<(\w+)\b[^>]*?\sdata-t="(\w+)"[^>]*>)([^<]*)(<\/\2>)/g, (m, open, tag, key, inner, close) =>
     (vals[key] ? `${open}${esc(vals[key])}${close}` : m));
