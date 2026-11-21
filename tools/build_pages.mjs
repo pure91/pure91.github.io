@@ -172,11 +172,17 @@ function goPage() {
   var ua = navigator.userAgent || '';
   var android = /Android/i.test(ua);
   var ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // ad links (/go/?utm_source=meta&…): the utm_* tags go on to Play as the install referrer (Play Console → acquisition by UTM)
+  var tags = (location.search.match(/[?&]utm_[a-z]+=[^&#]*/g) || []).map(function (s) { return s.slice(1); }).join('&');
+  var ref = tags ? '&referrer=' + encodeURIComponent(tags) : '';
+  if (ref) document.addEventListener('DOMContentLoaded', function () {
+    var a = document.querySelector('a[href^="https://play.google.com"]'); if (a) a.href += ref;
+  });
   if (android || ios) {
     // coming back from the store (back button / tab switch) shows the buttons instead of jumping to the store again
     try { if (sessionStorage.getItem('go-store')) return; sessionStorage.setItem('go-store', '1'); } catch (e) {}
   }
-  if (android) location.replace(${JSON.stringify(intent)});
+  if (android) location.replace(ref ? ${JSON.stringify(intent.split('#')[0])} + ref + '#Intent;scheme=market;package=com.android.vending;S.browser_fallback_url=' + encodeURIComponent(${JSON.stringify(play)} + ref) + ';end' : ${JSON.stringify(intent)});
   else if (ios) location.replace(${JSON.stringify(ios)});
   else location.replace('/ko/');
 })();
