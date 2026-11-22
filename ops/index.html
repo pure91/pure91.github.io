@@ -127,6 +127,9 @@ td.zero { color: var(--text-3); }
 .order .p > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .order .p > div.w { white-space: normal; word-break: keep-all; }
 .order > span { white-space: nowrap; flex-shrink: 0; }
+.order.rv b { color: var(--bad); }
+.order .p .pill { margin-left: 4px; }
+.flag-foot { margin-top: 8px; line-height: 1.5; }
 .muted { color: var(--text-3); font-size: 12px; }
 .err { color: var(--bad); font-size: 14px; margin: 8px 0 0; }
 input[type=password], input[type=text] {
@@ -239,6 +242,16 @@ input[type=password], input[type=text] {
     <div class="card hide" id="countryCard">
       <h2>결제한 나라</h2>
       <div id="countries"></div>
+    </div>
+
+    <div class="card hide" id="flagCard">
+      <div class="card-h">
+        <h2>자동 제한된 계정</h2>
+        <span class="pill bad hide" id="flagNeed"></span>
+      </div>
+      <div class="muted" id="flagNote"></div>
+      <div id="flags"></div>
+      <div class="muted flag-foot">서버가 저절로 순위에서 숨기고 채팅 · 길드를 막은 계정이에요 (시계만 걸린 계정은 순위만). '확인 필요'는 결제 · 닉네임 · 길드가 있어 진짜 플레이어일 수 있는 계정이고, 걸린 지 7일이 지나면 목록에서 빠져요.</div>
     </div>
 
     <div class="card">
@@ -518,6 +531,35 @@ input[type=password], input[type=text] {
       : '<div class="muted">아직 없어요.</div>';
   }
 
+  // 자동 제한된 계정 (149단계 서버 flags, 사용자 11-23 '그런사람이 감지되면 대시보드에서 확인필요라고 하나 넣을까요' → '네, 넣어요').
+  // 서버가 저장을 받을 때마다 저절로 거는 깃발 (보석 · 진행 · 시계 · 누적 횟수) 가운데 최근 7일에 새로 걸린 계정, 확인 필요 먼저.
+  // 확인 필요 = 결제 · 닉네임 · 길드가 있는 계정 (잘못 걸린 건 아닌지 볼 것). 옛 서버면 flags 가 없어 칸을 숨김
+  const FLAG_WHY = { gems: "보석", acorns: "황금 도토리", play: "플레이 시간", climb: "진행 속도", tiers: "난이도 단계", stage: "스테이지", prestige: "개척 횟수",
+    defense: "방어전", skytree: "하늘나무", race: "달리기", shape: "저장 모양", clock: "폰 시계", counter: "누적 횟수" };
+  const FLAG_CNT = { kills: "처치", upgrades: "강화", stages: "스테이지", digs: "굴 파기", gacha: "뽑기 합", pulls: "뽑기 횟수", merges: "합성",
+    nut_merges: "열매 합성", research: "연구", adventures: "모험", rebirths: "개척" };
+  function drawFlags(f) {
+    const ok = f && typeof f === "object";
+    $("flagCard").classList.toggle("hide", !ok);
+    if (!ok) return;
+    const list = Array.isArray(f.list) ? f.list : [];
+    const need = Number(f.review || 0);
+    $("flagNeed").classList.toggle("hide", need <= 0);
+    $("flagNeed").textContent = "확인 필요 " + fmt(need);
+    $("flagNote").textContent = "지금 제한 중 " + fmt(f.open) + "개 · 최근 7일에 새로 걸린 계정 " + fmt(f.week) + "개";
+    $("flags").innerHTML = list.length ? list.map((r) => {
+      const why = (Array.isArray(r.reasons) ? r.reasons : []).map((k) => FLAG_WHY[k] || k).join(" · ");
+      const c = r.counter && typeof r.counter === "object" ? r.counter : null;
+      const cnt = c && c.key ? (FLAG_CNT[c.key] || c.key) + " " + fmt(c.value) + " (한도 " + fmt(c.cap) + ")" : "";
+      const bits = [r.buys > 0 ? "결제 " + fmt(r.buys) + "건" : "", r.guild ? "길드 " + r.guild : "",
+        r.play_h !== null && r.play_h !== undefined ? "플레이 " + fmt(r.play_h) + "시간" : "", r.made ? "가입 " + r.made : ""].filter(Boolean).join(" · ");
+      return '<div class="order' + (r.review ? " rv" : "") + '"><div class="p"><div class="w"><b>' + esc((r.name || "보안관") + " #" + r.tag) + "</b>" +
+        (r.review ? '<span class="pill bad">확인 필요</span>' : "") + (r.soft ? '<span class="pill">순위만 숨김</span>' : "") + "</div>" +
+        '<div class="muted w">' + esc("이유: " + (why || "-") + (cnt ? " · " + cnt : "")) + "</div>" +
+        (bits ? '<div class="muted w">' + esc(bits) + "</div>" : "") + "</div><span>" + esc(r.at || "") + "</span></div>";
+    }).join("") : '<div class="muted">최근 7일 동안 새로 걸린 계정이 없어요.</div>';
+  }
+
   // 서버 상태 (139단계 서버 health, 사용자 11-21 '메모리 부하율이나 서버 상태나 … 부하를 오게하는건 안되니까').
   // 60초 캐시 안에서 이미 있는 통계만 읽음. CPU · 메모리는 SQL 로 못 읽어서 Supabase 보고서 링크만
   const SUPA_REPORT = "https://supabase.com/dashboard/project/ptygspcyueotglxzulql/observability/database";
@@ -654,6 +696,7 @@ input[type=password], input[type=text] {
     drawStages();
     drawProducts();
     drawRefunds(d.refunds, who);
+    drawFlags(d.flags);
     drawHealth(d.health);
     const os = d.recent_orders || [];
     $("orders").innerHTML = os.length ? os.map((o) =>
