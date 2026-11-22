@@ -154,8 +154,14 @@ input[type=password], input[type=text] {
 .live.off { background: var(--text-3); }
 @media (max-width: 420px) { .hero .v { font-size: 28px; } .hero .k { font-size: 12px; } }
 .hbar .pct { color: var(--text-3); font-size: 12px; margin-left: 4px; }
-.hbar.quit { grid-template-columns: 128px 1fr 64px; }
-.hbar.quit .fill { background: var(--s2); }
+.chat-seg { display: flex; flex-wrap: wrap; margin: 10px 0 2px; }
+.chat-line { padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.chat-line:first-child { border-top: 0; }
+.chat-line .t { color: var(--text-3); font-size: 12px; margin-right: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chat-line .pill { margin-right: 6px; }
+.chat-line b { margin-right: 6px; font-weight: 600; }
+.chat-line.hid .m { color: var(--text-3); text-decoration: line-through; }
+#chat { margin-top: 8px; max-height: 70vh; overflow-y: auto; }
 .hbar .tag { display: inline-block; font-size: 11px; color: var(--s2); border: 1px solid currentColor; border-radius: 6px; padding: 0 4px; margin-left: 4px; vertical-align: 1px; }
 .pill { display: inline-block; font-size: 12px; border-radius: 8px; padding: 1px 7px; background: var(--grid); color: var(--text-2); white-space: nowrap; }
 .pill.bad { color: var(--bad); }
@@ -188,23 +194,11 @@ input[type=password], input[type=text] {
     <div class="card hero-card" id="hero"></div>
     <div class="tiles" id="tiles"></div>
     <div class="tiles four" id="rev"></div>
-    <div class="tiles two" id="adTiles"></div>
 
     <div class="card">
       <h2 id="chartTitle">하루 새 플레이어</h2>
       <div class="legend"><span><i style="background:var(--s1)"></i>iOS</span><span><i style="background:var(--s2)"></i>Android</span></div>
       <div class="chart" id="chart"><div class="tip" id="tip"></div></div>
-    </div>
-
-    <div class="card">
-      <h2>날짜별</h2>
-      <div class="tbl-wrap"><table id="days"></table></div>
-    </div>
-
-    <div class="card hide" id="quitCard">
-      <h2>어디서 그만두나 (최근 7일 새 계정)</h2>
-      <div class="muted" id="quitNote"></div>
-      <div id="quit"></div>
     </div>
 
     <div class="card">
@@ -247,6 +241,16 @@ input[type=password], input[type=text] {
       <div id="countries"></div>
     </div>
 
+    <div class="card">
+      <div class="card-h">
+        <h2>길드 채팅</h2>
+        <button type="button" id="chatLoad">불러오기</button>
+      </div>
+      <div class="muted" id="chatNote">누를 때만 불러와요 · 사람이 쓴 글 최근 300줄 · 채팅 글은 3일 뒤 지워져요</div>
+      <div class="seg chat-seg hide" id="chatSeg" role="group" aria-label="길드"></div>
+      <div id="chat"></div>
+    </div>
+
     <div class="card hide" id="healthCard">
       <h2>서버 상태</h2>
       <div id="health"></div>
@@ -262,6 +266,7 @@ input[type=password], input[type=text] {
 (() => {
   const URL_RPC = "https://ptygspcyueotglxzulql.supabase.co/rest/v1/rpc/dash_stats";
   const STORE = "acorn_ops_code";
+  const URL_CHAT = URL_RPC.replace("dash_stats", "dash_guild_chat");
   // 상품 이름: 게임 data/shop.json 의 이름 그대로 (11-16). 셋째 · 넷째 칸(상점 탭 · 55 새 상품)은 11-18 부터 화면에 안 씀
   const CATALOG = [
     ["starter_pack", "초보자 꾸러미", "일일", 1],
@@ -338,8 +343,6 @@ input[type=password], input[type=text] {
     ["wall_pull_3", "벽 돌파 특가 · 뽑기권 60장", "특가"]
   ];
   const CAT = new Map(CATALOG.map((r) => [r[0], r]));
-  // 광고 1회 예상 수입 (원). 대략값이라 실적이 쌓이면 다시 잡기 (11-10 65원 → 11-17 사용자 '120원으로 계산해줘')
-  const AD_KRW_PER_VIEW = 120;
   // 스토어 원본의 나라 코드: Apple 은 세 글자(USA), Google 은 두 글자(US)
   const A3 = { USA: "US", KOR: "KR", JPN: "JP", TWN: "TW", HKG: "HK", CAN: "CA", GBR: "GB", DEU: "DE", FRA: "FR", AUS: "AU", NZL: "NZ",
     BRA: "BR", MEX: "MX", IDN: "ID", THA: "TH", VNM: "VN", MYS: "MY", PHL: "PH", SGP: "SG", RUS: "RU", ESP: "ES", ITA: "IT", ARM: "AM",
@@ -492,24 +495,6 @@ input[type=password], input[type=text] {
     drawProducts();
   });
 
-  // 어디서 그만두나 (139단계 서버 quit, 사용자 11-21 '바로 나감이라는건 어느구역에서 나가는걸 말하는지'):
-  // 가입 1~8일 전 새 계정 중 24시간 넘게 안 온 계정을 가장 멀리 간 곳(스테이지 순위 기록)으로 나눔. 맨 위 두 줄이 '바로 나감'
-  const QUIT_ROWS = [["nosave", "켜고 바로 나감"], ["z1_1", "1-1 하다 나감"], ["z1", "1구역 (1-2~1-5)"], ["z2", "2구역"], ["z3", "3구역"],
-    ["z4_5", "4~5구역"], ["z6_10", "6~10구역"], ["z11_20", "11~20구역"], ["z21", "21구역~"]];
-  function drawQuit(q) {
-    $("quitCard").classList.toggle("hide", !q);
-    if (!q) return;
-    const gone = Math.max(0, (q.n || 0) - (q.here || 0));
-    const mx = Math.max(1, ...QUIT_ROWS.map(([k]) => q[k] || 0));
-    $("quitNote").innerHTML = esc("새 계정 " + fmt(q.n) + "개 중 24시간 넘게 안 온 " + fmt(gone) + "개 · 아직 오는 " + fmt(q.here) + "개") +
-      "<br>" + esc("맨 위 두 줄 = 바로 나감 (첫 스테이지 1-1 을 못 깸)");
-    $("quit").innerHTML = QUIT_ROWS.map(([k, label]) => {
-      const v = q[k] || 0;
-      return '<div class="hbar quit"><span>' + esc(label) + '</span><div class="track"><div class="fill" style="width:' + (100 * v / mx) + "%" +
-        (v ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(v) + '<span class="pct">' + (gone ? Math.round(100 * v / gone) : 0) + "%</span></span></div>";
-    }).join("");
-  }
-
   // 환불 (139단계 서버 refunds, 사용자 11-21 '무엇이 환불된건지 누가 언제 환불한건지'): 최근 10건.
   // 회수 = 그 사람이 앱을 열 때 게임이 받은 것을 되가져감 (get_refunds → ack_refund). '회수 전' = 환불 뒤 아직 앱을 안 열었음
   const G_REASON = ["기타", "구매 후회", "못 받음", "불량", "실수로 구매", "사기", "본인 결제 부인", "카드사 지급 거절"];      // Google voidedReason 0~7
@@ -555,6 +540,60 @@ input[type=password], input[type=text] {
       kv("CPU · 메모리", '<a href="' + SUPA_REPORT + '" target="_blank" rel="noopener noreferrer">Supabase 보고서</a>');
   }
 
+  // 길드 채팅 (146단계 서버 dash_guild_chat, 사용자 11-22 '사용자들 길드채팅에서 무슨 대화하는지 보이게'):
+  // [불러오기] 를 누를 때만 서버에 물음 (서버 60초 캐시, 자동으로 다시 묻지 않음). 사람이 쓴 글만 최근 300줄, 이름은 닉네임 #꼬리표.
+  let chatData = null, chatGuild = 0;
+  function drawChat() {
+    const d = chatData;
+    if (!d) return;
+    const all = d.lines || [];
+    const gs = (d.guilds || []).filter((g) => g.lines > 0);
+    const gname = new Map((d.guilds || []).map((g) => [g.id, g.name]));
+    if (chatGuild && !gs.some((g) => g.id === chatGuild)) chatGuild = 0;
+    $("chatSeg").classList.toggle("hide", gs.length < 2);
+    $("chatSeg").innerHTML = '<button type="button" data-g="0"' + (chatGuild ? "" : ' class="on"') + ">전체 " + fmt(all.length) + "</button>" +
+      gs.map((g) => '<button type="button" data-g="' + g.id + '"' + (chatGuild === g.id ? ' class="on"' : "") + ">" + esc(g.name) + " " + fmt(g.lines) + "</button>").join("");
+    const ls = all.filter((l) => !chatGuild || l.g === chatGuild);
+    $("chatNote").textContent = d.at + " 기준 · 길드 채팅 글 " + fmt(d.total) + "줄 중 최근 " + fmt(all.length) + "줄 · 채팅 글은 3일 뒤 지워져요";
+    $("chat").innerHTML = ls.length ? ls.map((l) =>
+      '<div class="chat-line' + (l.hidden ? " hid" : "") + '"><span class="t">' + esc(l.at) + "</span>" +
+      (chatGuild ? "" : '<span class="pill">' + esc(gname.get(l.g) || ("길드 " + l.g)) + "</span>") +
+      "<b>" + esc(l.name ? l.name + " #" + l.tag : "보안관 #" + l.tag) + '</b><span class="m">' + esc(l.body) + "</span>" +
+      (l.hidden ? ' <span class="pill">숨김 · 신고 ' + fmt(l.reports) + "</span>" : "") + "</div>").join("")
+      : '<div class="muted">글이 없어요</div>';
+  }
+  async function loadChat() {
+    const code = memCode || getCode();
+    const i = code.indexOf("~");
+    if (i < 1) { showLogin(); return; }
+    const key = code.slice(0, i), tok = code.slice(i + 1);
+    const btn = $("chatLoad");
+    btn.disabled = true; btn.textContent = "불러오는 중…";
+    try {
+      const r = await fetch(URL_CHAT, {
+        method: "POST",
+        headers: Object.assign({ apikey: key, "Content-Type": "application/json" },
+          key.startsWith("eyJ") ? { Authorization: "Bearer " + key } : {}),
+        body: JSON.stringify({ p_code: tok })
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error((data && data.message) || ("HTTP " + r.status));
+      if (!data || data.ok !== true) throw new Error("코드가 맞지 않아요");
+      chatData = data;
+      drawChat();
+    } catch (e) {
+      $("chatNote").textContent = "불러오지 못했어요: " + e.message;
+    }
+    btn.disabled = false; btn.textContent = "새로 보기";
+  }
+  $("chatLoad").addEventListener("click", loadChat);
+  $("chatSeg").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    chatGuild = +b.dataset.g || 0;
+    drawChat();
+  });
+
   let lastDays = [];
   function render(d) {
     $("at").textContent = d.at + " 기준 (한국 시간)";
@@ -579,7 +618,6 @@ input[type=password], input[type=text] {
     const last7 = days.slice(-7);
     const sum = (list, k) => list.reduce((a, r) => a + (r[k] || 0), 0);
     const paid = (n) => "결제 " + fmt(n) + "건";
-    const adTile = (k, n) => tile(k, has(n) ? fmt(n) : "-", has(n) ? "예상 매출 약 " + won(Math.round(n * AD_KRW_PER_VIEW / 10) * 10) : "");
     const topNote = !has(d.top_stage) ? "" :
       [who({ name: d.top_name, tag: d.top_tag }), fmt(stageZone(Math.floor(d.top_stage))) + "구역"].filter(Boolean).join(" · ");
     // 맨 위 강조 세 숫자 (사용자 11-21 '현재 접속자 오늘 접속자 꾸준히 오는사람 등 강조할것들 잘보이게'):
@@ -611,19 +649,8 @@ input[type=password], input[type=text] {
       tile("오늘 매출", won(today.krw), paid(today.orders)) +
       tile("최근 7일 매출", won(sum(last7, "krw")), paid(sum(last7, "orders"))) +
       tile("누적 매출", won(d.krw_total), paid(d.orders_total) + (has(d.refunds_total) ? " · 환불 " + fmt(d.refunds_total) + "건" : ""));
-    // 광고: 최근 7일 (오늘 포함) 합계 + 오늘 (사용자 11-11 '어제 광고 본 횟수는 최근 7일로하는게 더 좋을것같아')
-    const ads7 = last7.some((r) => has(r.ads)) ? sum(last7, "ads") : null;
-    $("adTiles").innerHTML = adTile("최근 7일 광고 본 횟수", ads7) + adTile("오늘 광고 본 횟수", today.ads);
     drawChart(days);
-    let h = "<tr><th>날짜</th><th>새 플레이어</th><th>바로 나감</th><th>돌아옴</th><th>결제</th><th>환불</th><th>매출</th><th>광고</th><th>주간 보스</th></tr>";
-    for (const r of days.slice().reverse()) {
-      const c = (v, s) => '<td class="' + (v ? "" : "zero") + '">' + (s === undefined ? fmt(v) : s) + "</td>";
-      h += "<tr><td>" + esc(r.d) + "</td>" + c(r.players) + c(r.bounces) + c(r.returning) + c(r.orders) +
-        c(r.refunds || 0) + c(r.krw, r.krw ? won(r.krw) : "0") + c(r.ads, has(r.ads) ? fmt(r.ads) : "-") + c(r.wb) + "</tr>";
-    }
-    $("days").innerHTML = h;
     lastData = d;
-    drawQuit(d.quit);
     drawStages();
     drawProducts();
     drawRefunds(d.refunds, who);
