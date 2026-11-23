@@ -120,6 +120,9 @@ function render(tpl, k) {
   // Korean blog /ko/blog/ (raccoon-sheriff tools/make_site_blog.py): footer link on /ko/ once a post exists
   if (k === 'ko' && fs.existsSync(path.join(ROOT, 'ko/blog/posts.json')))
     h = sub(h, /(<nav class="links">\n)/, m => `${m}    <a href="/ko/blog/">블로그</a>\n`, 'footer links');
+  // 네이버 게임 공식 라운지 (11-23 개설, 한국어만): 바닥 링크도 정적으로 (JS 안 도는 검색 로봇용; 위 단추는 main.js badges)
+  if (k === 'ko')
+    h = sub(h, /(<nav class="links">\n)/, m => `${m}    <a href="https://game.naver.com/lounge/Squirrel_Sheriff/home" target="_blank" rel="noopener">공식 라운지</a>\n`, 'footer lounge');
   return h;
 }
 

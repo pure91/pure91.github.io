@@ -7,6 +7,9 @@ const STORE = {
   iosFront: { ko: 'kr', ja: 'jp', 'zh-TW': 'tw', de: 'de', fr: 'fr', es: 'es', 'pt-BR': 'br', ru: 'ru', id: 'id', ms: 'my', th: 'th', vi: 'vn' },
 };
 
+// 네이버 게임 공식 라운지 (11-23 개설): 한국어 페이지에만 스토어 단추 밑 한 줄 (네이버 아이디가 필요하고 한국어뿐). 앱 data/server.json lounge_url 과 같은 주소
+const LOUNGE = 'https://game.naver.com/lounge/Squirrel_Sheriff/home';
+
 const VIDEO_REV = 9; // bump when the clips are re-rendered (5: en/ja/zh-TW = sticker anchor ad too, 6: anchor ad 2 sticker = new content, 7: pantry tower ad, all 14 languages, 8: same picture, new music, 9: end card without the 11.11 date)
 const SHOT_REV = 7, SHOT_COUNT = 9; // screenshots: bump SHOT_REV when they are retaken (6: 11-04 comic-band store set, same 9 as the stores, 7: 11-14 retake with the new crew skins + 54/73 screens)
 const VIDEO_LANGS = { ko: 'ko', ja: 'ja', 'zh-TW': 'zh_TW', 'zh-CN': 'zh_CN', de: 'de', fr: 'fr', es: 'es', 'pt-BR': 'pt_BR', ru: 'ru', id: 'id', ms: 'ms', th: 'th', vi: 'vi' }; // others fall back to English
@@ -42,13 +45,18 @@ function pickLang() {
 const ICON_PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#34A853" d="M3.6 2.3 13.5 12l-9.9 9.7c-.4-.2-.6-.6-.6-1.1V3.4c0-.5.2-.9.6-1.1Z"/><path fill="#FBBC04" d="m17 8.5-3.5 3.5L17 15.5l3.9-2.2c.8-.5.8-1.6 0-2.1L17 8.5Z"/><path fill="#4285F4" d="M3.6 21.7 13.5 12l3.5 3.5L5.2 22c-.6.3-1.2.2-1.6-.3Z"/><path fill="#EA4335" d="M3.6 2.3c.4-.5 1-.6 1.6-.3L17 8.5 13.5 12 3.6 2.3Z"/></svg>';
 const ICON_APPLE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M16.4 12.7c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2-.9-3.4-.9c-1.7 0-3.3 1-4.2 2.6-1.8 3.1-.5 7.7 1.3 10.2.9 1.2 1.9 2.6 3.2 2.6 1.3-.1 1.8-.8 3.3-.8 1.6 0 2 .8 3.4.8 1.4 0 2.3-1.3 3.1-2.5 1-1.4 1.4-2.8 1.4-2.9 0 0-2.7-1-2.7-4.1ZM13.9 5.1c.7-.9 1.2-2 1-3.2-1 0-2.3.7-3 1.6-.7.8-1.2 2-1.1 3.1 1.2.1 2.3-.6 3.1-1.5Z"/></svg>';
 
+const ICON_CHAT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M12 3C6.5 3 2 6.6 2 11c0 2.4 1.3 4.6 3.4 6.1L4.6 21l4.3-2.4c1 .3 2 .4 3.1.4 5.5 0 10-3.6 10-8s-4.5-8-10-8Z"/><circle cx="8" cy="11" r="1.4" fill="#029F48"/><circle cx="12" cy="11" r="1.4" fill="#029F48"/><circle cx="16" cy="11" r="1.4" fill="#029F48"/></svg>';
+
 function badges(t, lang) {
   const hl = lang.replace('-', '_');
   const b = (live, href, icon, small, name) => live
     ? `<a class="badge" href="${href}" target="_blank" rel="noopener">${icon}<span><small>${small}</small><b>${name}</b></span></a>`
     : `<span class="badge off">${icon}<span><small>${small}</small><b>${name}</b></span><span class="soon">${t.soon}</span></span>`;
   const html = b(STORE.live.play, `${STORE.play}&hl=${hl}`, ICON_PLAY, 'GET IT ON', 'Google Play') + b(STORE.live.ios, STORE.iosFront[lang] ? STORE.ios.replace('.com/', `.com/${STORE.iosFront[lang]}/`) : STORE.ios, ICON_APPLE, 'Download on the', 'App Store');
-  $$('[data-badges]').forEach(el => { el.innerHTML = html; });
+  const lounge = lang === 'ko'
+    ? `<span class="badge-break" aria-hidden="true"></span><a class="badge lounge" href="${LOUNGE}" target="_blank" rel="noopener">${ICON_CHAT}<span><small>공략 · 길드 모집 · 쿠폰 소식</small><b>네이버 공식 라운지</b></span></a>`
+    : '';
+  $$('[data-badges]').forEach(el => { el.innerHTML = html + lounge; });
 }
 
 function loadFont(lang) {
