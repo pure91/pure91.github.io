@@ -157,6 +157,10 @@ input[type=password], input[type=text] {
 .live.off { background: var(--text-3); }
 @media (max-width: 420px) { .hero .v { font-size: 28px; } .hero .k { font-size: 12px; } }
 .hbar .pct { color: var(--text-3); font-size: 12px; margin-left: 4px; }
+.qbars .hbar { grid-template-columns: 84px 1fr 122px; }
+.qbars .hbar .c { white-space: nowrap; }
+.hbar .gone { color: var(--text-3); font-size: 12px; margin-left: 6px; }
+#stageNote, #quitNote { margin: -4px 0 6px; }
 .chat-seg { display: flex; flex-wrap: wrap; margin: 10px 0 2px; }
 .chat-line { padding: 7px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
 .chat-line:first-child { border-top: 0; }
@@ -208,10 +212,22 @@ input[type=password], input[type=text] {
       <div class="card-h">
         <h2>플레이어 진행도 (최고 스테이지)</h2>
         <div class="seg hide" id="stageSeg" role="group" aria-label="접속 기간">
-          <button type="button" data-k="">전체</button><button type="button" data-k="_7d">최근 7일</button>
+          <button type="button" data-k="7d">7일</button><button type="button" data-k="3d">3일</button><button type="button" data-k="0d">오늘</button>
         </div>
       </div>
+      <div class="muted" id="stageNote"></div>
       <div id="stages"></div>
+    </div>
+
+    <div class="card hide" id="quitCard">
+      <div class="card-h">
+        <h2>어디서 그만두나 (새 계정)</h2>
+        <div class="seg" id="quitSeg" role="group" aria-label="새로 온 기간">
+          <button type="button" data-k="7d">7일</button><button type="button" data-k="3d">3일</button><button type="button" data-k="0d">오늘</button>
+        </div>
+      </div>
+      <div class="muted" id="quitNote"></div>
+      <div id="quits"></div>
     </div>
 
     <div class="card">
@@ -353,7 +369,23 @@ input[type=password], input[type=text] {
     ["ad_free_sale", "광고 제거 + 볼주머니 (특가)", "특가"],
     ["wall_pull_1", "벽 돌파 특가 · 뽑기권 10장", "특가"],
     ["wall_pull_2", "벽 돌파 특가 · 뽑기권 30장", "특가"],
-    ["wall_pull_3", "벽 돌파 특가 · 뽑기권 60장", "특가"]
+    ["wall_pull_3", "벽 돌파 특가 · 뽑기권 60장", "특가"],
+    // 11-17 ~ 11-23 새 상품 (사용자 11-24 '상품도 업데이트해주세요'): 이름은 docs/play_products.json 그대로
+    ["weekly_lite", "주간 알뜰 꾸러미", "주간"],
+    ["weekly_pull_s", "주간 뽑기 상자 · 소", "주간"],
+    ["pass_ticket", "뽑기 정기권", "월간"],
+    ["monthly_lite", "월간 알뜰 상자", "월간"],
+    ["monthly_star", "월간 ★3 상자", "월간"],
+    ["single_noads", "광고 제거 (단품)", "단품"],
+    ["single_speed", "2배속 영구권", "단품"],
+    ["single_ad_free", "광고 제거 + 2배속", "단품"],
+    ["single_piggy", "볼주머니", "단품"],
+    ["single_auto_harvest", "자동 수확", "단품"],
+    ["single_auto_upgrade", "자동 강화", "단품"],
+    ["single_perm_buff", "부스터 영원히", "단품"],
+    ["single_dig_auto", "자동 굴 파기", "단품"],
+    ["single_auto_prestige", "자동 개척", "단품"],
+    ["set_all", "단품 7가지 전부", "단품"]
   ];
   const CAT = new Map(CATALOG.map((r) => [r[0], r]));
   // 스토어 원본의 나라 코드: Apple 은 세 글자(USA), Google 은 두 글자(US)
@@ -435,37 +467,84 @@ input[type=password], input[type=text] {
   // 그 전 날짜는 비공개 테스트라 날짜별 표 · 그래프에서 뺌. 서버(43단계)가 launch_day 를 주면 그걸 씀
   const LAUNCH = "11-07";
 
-  // 플레이어 진행도: 전체 · 최근 7일 접속 (82단계 서버 stage_buckets_7d, 사용자 11-15; 최근 3일은 11-18 뺌). 고른 칸은 이 기기에만 기억
-  const VIEW_STORE = "acorn_ops_stage_view";
-  let stageView = "_7d";
-  try { const v = localStorage.getItem(VIEW_STORE); if (v === "" || v === "_7d") stageView = v; } catch (e) {}
+  // 구역 칸 (164단계 서버 prog_* · quit_*): 앞쪽 구역은 하나씩, 뒤로 갈수록 묶음. 구역 = 쉬움 1~20구역, 보통 = 21~40구역 …
+  const ZONE_KEYS = [["z1_1", "1-1 못 깸"], ["z1", "1구역"], ["z2", "2구역"], ["z3", "3구역"], ["z4", "4구역"], ["z5", "5구역"],
+    ["z6_10", "6~10구역"], ["z11_20", "11~20구역"], ["t2", "보통"], ["t3", "어려움"], ["t4", "매우 어려움"], ["t5", "지옥"],
+    ["t6_10", "심연~초월"], ["inf", "무한"]];
+  const WIN_NAME = { "7d": "최근 7일", "3d": "최근 3일", "0d": "오늘" };
+  // 기간 칸 (7일 · 3일 · 오늘) 고르기: 고른 칸은 이 기기에만 기억
+  function segPick(id, store, def, draw) {
+    let v = def;
+    try { const s = localStorage.getItem(store); if (WIN_NAME[s]) v = s; } catch (e) {}
+    $(id).addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      v = b.dataset.k;
+      try { localStorage.setItem(store, v); } catch (err) {}
+      draw();
+    });
+    return () => v;
+  }
+  function segMark(id, v, label) {
+    $(id).querySelectorAll("button").forEach((b) => {
+      b.dataset.l = b.dataset.l || b.textContent;
+      b.textContent = label ? label(b.dataset.l, b.dataset.k) : b.dataset.l;
+      b.classList.toggle("on", b.dataset.k === v);
+      b.setAttribute("aria-pressed", b.dataset.k === v ? "true" : "false");
+    });
+  }
+  const hbar = (label, n, mx, right) =>
+    '<div class="hbar"><span>' + esc(label) + '</span><div class="track"><div class="fill" style="width:' +
+    (100 * (n || 0) / mx) + '%' + (n ? "" : ";display:none") + '"></div></div><span class="c">' + right + "</span></div>";
+
+  // 플레이어 진행도: 최근 7일 · 3일 · 오늘 들어온 플레이어(1-1 깬 계정)의 최고 스테이지 (사용자 11-24 '7일, 3일, 오늘로 볼게요').
+  // 옛 서버(146단계까지)면 예전처럼 stage_buckets_7d 한 가지만
   let lastData = null;
+  const stageView = segPick("stageSeg", "acorn_ops_stage_win", "7d", () => drawStages());
   function drawStages() {
     const d = lastData || {};
-    const hasViews = !!d.stage_buckets_7d;
-    const view = hasViews && d["stage_buckets" + stageView] ? stageView : "";
-    const sb = d["stage_buckets" + view] || {};
-    const stageKeys = STAGE_KEYS;
-    const total = (k) => stageKeys.reduce((a, [s]) => a + ((d["stage_buckets" + k] || {})[s] || 0), 0);
-    $("stageSeg").classList.toggle("hide", !hasViews);
-    $("stageSeg").querySelectorAll("button").forEach((b) => {
-      b.dataset.l = b.dataset.l || b.textContent;
-      b.textContent = b.dataset.l + " " + fmt(total(b.dataset.k)) + "명";
-      b.classList.toggle("on", b.dataset.k === view);
-      b.setAttribute("aria-pressed", b.dataset.k === view ? "true" : "false");
-    });
-    const mx = Math.max(1, ...stageKeys.map(([k]) => sb[k] || 0));
-    $("stages").innerHTML = stageKeys.map(([k, label]) =>
-      '<div class="hbar"><span>' + label + '</span><div class="track"><div class="fill" style="width:' +
-      (100 * (sb[k] || 0) / mx) + '%' + (sb[k] ? "" : ";display:none") + '"></div></div><span class="c">' + fmt(sb[k]) + "</span></div>").join("");
+    if (!d.prog_7d) {
+      const sb = d.stage_buckets_7d || d.stage_buckets || {};
+      $("stageSeg").classList.add("hide");
+      $("stageNote").textContent = d.stage_buckets_7d ? "최근 7일 접속" : "";
+      const mx = Math.max(1, ...STAGE_KEYS.map(([k]) => sb[k] || 0));
+      $("stages").innerHTML = STAGE_KEYS.map(([k, label]) => hbar(label, sb[k], mx, fmt(sb[k]))).join("");
+      return;
+    }
+    const v = stageView();
+    const keys = ZONE_KEYS.slice(1);      // 1-1 을 깬 사람만 (못 깬 계정은 아래 '어디서 그만두나')
+    const total = (w) => keys.reduce((a, [k]) => a + ((d["prog_" + w] || {})[k] || 0), 0);
+    $("stageSeg").classList.remove("hide");
+    segMark("stageSeg", v, (l, k) => l + " " + fmt(total(k)) + "명");
+    $("stageNote").textContent = WIN_NAME[v] + " 들어온 플레이어가 간 곳까지 · 구역 = 쉬움 1~20구역, 보통 = 21~40구역";
+    const sb = d["prog_" + v] || {};
+    const mx = Math.max(1, ...keys.map(([k]) => sb[k] || 0));
+    $("stages").innerHTML = keys.map(([k, label]) => hbar(label, sb[k], mx, fmt(sb[k]))).join("");
   }
-  $("stageSeg").addEventListener("click", (e) => {
-    const b = e.target.closest("button");
-    if (!b) return;
-    stageView = b.dataset.k;
-    try { localStorage.setItem(VIEW_STORE, stageView); } catch (err) {}
-    drawStages();
-  });
+
+  // 어디서 그만두나 (164단계 서버 quit_*, 사용자 11-24 '나가는 구역 조금 더 세분화 … 또 어디서 나가는지 알고싶어서요'):
+  // 그 기간에 새로 온 계정이 지금 멈춰 있는 칸 [명, 떠난 명]. 떠남 = 24시간 넘게 안 옴 (오늘 새로 온 계정은 2시간). 옛 서버면 칸을 숨김
+  const quitView = segPick("quitSeg", "acorn_ops_quit_win", "7d", () => drawQuit());
+  function drawQuit() {
+    const d = lastData || {};
+    $("quitCard").classList.toggle("hide", !d.quit_7d);
+    if (!d.quit_7d) return;
+    const v = quitView();
+    const q = d["quit_" + v] || {};
+    const sum = (i) => ZONE_KEYS.reduce((a, [k]) => a + ((q[k] || [])[i] || 0), 0);
+    const all = sum(0), gone = sum(1);
+    segMark("quitSeg", v);
+    $("quitNote").textContent = WIN_NAME[v] + " 새 계정 " + fmt(all) + "개가 지금 멈춘 곳 · 그중 떠남 " + fmt(gone) + "개 (" +
+      (v === "0d" ? "2시간" : "24시간") + " 넘게 안 옴). 1-1 못 깸 = 바로 나감";
+    const shown = ZONE_KEYS.filter(([k]) => (q[k] || [])[0]);
+    if (!shown.length) { $("quits").innerHTML = '<div class="muted">아직 없어요.</div>'; return; }
+    const mx = Math.max(1, ...shown.map(([k]) => q[k][0]));
+    $("quits").innerHTML = '<div class="qbars">' + shown.map(([k, label]) => {
+      const [n, g] = q[k];
+      return hbar(label, n, mx, fmt(n) + '<span class="pct">' + (all ? Math.round(100 * n / all) : 0) + "%</span>" +
+        '<span class="gone">떠남 ' + fmt(g) + "</span>");
+    }).join("") + "</div>";
+  }
 
   // 상품별 판매: 최근 24시간 · 7일 · 전체 (96단계 서버 products). 고른 칸은 이 기기에만 기억.
   // 그 기간에 팔린 상품만 매출 큰 순으로 10개, 나머지는 '그 밖 N개' 한 줄 (사용자 11-18 '너무 상품별로 다안보여줘도돼')
@@ -712,6 +791,7 @@ input[type=password], input[type=text] {
     drawChart(days);
     lastData = d;
     drawStages();
+    drawQuit();
     drawProducts();
     drawRefunds(d.refunds, who);
     drawFlags(d.flags);
