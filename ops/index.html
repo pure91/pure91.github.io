@@ -29,6 +29,8 @@
   --bad: #c03a2b;
   --good: #1f8a4c;
   --hero: #e6effb;
+  --warn: #9a5a00;
+  --warn-soft: #fbe9cf;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -47,6 +49,8 @@
     --bad: #e66767;
     --good: #4cc27e;
     --hero: #1b2839;
+    --warn: #f2b25c;
+    --warn-soft: #3d2c12;
   }
 }
 :root[data-theme="dark"] {
@@ -65,6 +69,8 @@
   --bad: #e66767;
   --good: #4cc27e;
   --hero: #1b2839;
+  --warn: #f2b25c;
+  --warn-soft: #3d2c12;
 }
 * { box-sizing: border-box; }
 body {
@@ -157,7 +163,25 @@ input[type=password], input[type=text] {
 .live.off { background: var(--text-3); }
 @media (max-width: 420px) { .hero .v { font-size: 28px; } .hero .k { font-size: 12px; } }
 .hbar .pct { color: var(--text-3); font-size: 12px; margin-left: 4px; }
-.qbars .hbar { grid-template-columns: 84px 1fr 122px; }
+.qbars .hbar { grid-template-columns: 84px 1fr auto; font-size: 14px; }
+/* 진행도 · 그만두는 곳 한 카드 (사용자 11-26 '새계정 몇명에서 몇명떠난건지 잘보였으면 … 오늘 들어온 플레이어 진행도랑 같이보면') */
+.pq-sum { margin: 0 0 4px; }
+.pq-sum .k { white-space: normal; }
+.pq-sec { border-top: 1px solid var(--grid); padding-top: 10px; margin-top: 12px; }
+.pq-sec h3 { font-size: 14px; margin: 0 0 4px; }
+.pq-sec h3 span { color: var(--text-3); font-weight: 400; font-size: 12px; }
+.pq-sec .legend { margin: 4px 0 2px; }
+.qfill { display: flex; gap: 2px; height: 12px; min-width: 2px; }
+.qfill i { flex-basis: 0; min-width: 2px; height: 12px; }
+.qfill i.q-stay { background: var(--accent); }
+.qfill i.q-gone { background: var(--text-3); }
+.qfill i:last-child { border-radius: 0 4px 4px 0; }
+.qbars .c b { font-weight: 700; }
+.qbars .c .q-g { color: var(--text-2); margin-left: 6px; }
+/* 자동 제한된 계정: '걸린 뒤에도 접속' 은 주황 바탕 (사용자 11-26 '다른 색으로'), 오른쪽 걸린 때 밑에 '걸린 지 N일' */
+.pill.warn { color: var(--warn); background: var(--warn-soft); font-weight: 600; }
+.fat { text-align: right; }
+.fat em { display: block; font-style: normal; color: var(--text-3); font-size: 12px; }
 .qbars .hbar .c { white-space: nowrap; }
 .hbar .gone { color: var(--text-3); font-size: 12px; margin-left: 6px; }
 #stageNote, #quitNote { margin: -4px 0 6px; }
@@ -210,24 +234,23 @@ input[type=password], input[type=text] {
 
     <div class="card">
       <div class="card-h">
-        <h2>플레이어 진행도 (최고 스테이지)</h2>
-        <div class="seg hide" id="stageSeg" role="group" aria-label="접속 기간">
+        <h2>진행도 · 그만두는 곳</h2>
+        <div class="seg hide" id="stageSeg" role="group" aria-label="기간">
           <button type="button" data-k="7d">7일</button><button type="button" data-k="3d">3일</button><button type="button" data-k="0d">오늘</button>
         </div>
       </div>
-      <div class="muted" id="stageNote"></div>
-      <div id="stages"></div>
-    </div>
-
-    <div class="card hide" id="quitCard">
-      <div class="card-h">
-        <h2>어디서 그만두나 (새 계정)</h2>
-        <div class="seg" id="quitSeg" role="group" aria-label="새로 온 기간">
-          <button type="button" data-k="7d">7일</button><button type="button" data-k="3d">3일</button><button type="button" data-k="0d">오늘</button>
-        </div>
+      <div class="hero pq-sum hide" id="pqSum"></div>
+      <div class="pq-sec">
+        <h3>플레이어 진행도 <span>(최고 스테이지)</span></h3>
+        <div class="muted" id="stageNote"></div>
+        <div id="stages"></div>
       </div>
-      <div class="muted" id="quitNote"></div>
-      <div id="quits"></div>
+      <div class="pq-sec hide" id="quitCard">
+        <h3>어디서 그만두나 <span>(새 계정)</span></h3>
+        <div class="legend"><span><i style="background:var(--accent)"></i>남음</span><span><i style="background:var(--text-3)"></i>떠남</span></div>
+        <div class="muted" id="quitNote"></div>
+        <div id="quits"></div>
+      </div>
     </div>
 
     <div class="card">
@@ -500,7 +523,8 @@ input[type=password], input[type=text] {
   // 플레이어 진행도: 최근 7일 · 3일 · 오늘 들어온 플레이어(1-1 깬 계정)의 최고 스테이지 (사용자 11-24 '7일, 3일, 오늘로 볼게요').
   // 옛 서버(146단계까지)면 예전처럼 stage_buckets_7d 한 가지만
   let lastData = null;
-  const stageView = segPick("stageSeg", "acorn_ops_stage_win", "7d", () => drawStages());
+  // 11-26 (사용자 '오늘 들어온 플레이어 진행도랑 같이보면'): 진행도 · 그만두는 곳이 한 카드, 기간 칸 하나로 같이 바뀜
+  const stageView = segPick("stageSeg", "acorn_ops_stage_win", "7d", () => { drawStages(); drawQuit(); });
   function drawStages() {
     const d = lastData || {};
     if (!d.prog_7d) {
@@ -515,8 +539,8 @@ input[type=password], input[type=text] {
     const keys = ZONE_KEYS.slice(1);      // 1-1 을 깬 사람만 (못 깬 계정은 아래 '어디서 그만두나')
     const total = (w) => keys.reduce((a, [k]) => a + ((d["prog_" + w] || {})[k] || 0), 0);
     $("stageSeg").classList.remove("hide");
-    segMark("stageSeg", v, (l, k) => l + " " + fmt(total(k)) + "명");
-    $("stageNote").textContent = WIN_NAME[v] + " 들어온 플레이어가 간 곳까지 · 구역 = 쉬움 1~20구역, 보통 = 21~40구역";
+    segMark("stageSeg", v);
+    $("stageNote").textContent = WIN_NAME[v] + " 들어온 플레이어 " + fmt(total(v)) + "명이 간 곳까지 · 구역 = 쉬움 1~20구역, 보통 = 21~40구역";
     const sb = d["prog_" + v] || {};
     const mx = Math.max(1, ...keys.map(([k]) => sb[k] || 0));
     $("stages").innerHTML = keys.map(([k, label]) => hbar(label, sb[k], mx, fmt(sb[k]))).join("");
@@ -524,26 +548,36 @@ input[type=password], input[type=text] {
 
   // 어디서 그만두나 (164단계 서버 quit_*, 사용자 11-24 '나가는 구역 조금 더 세분화 … 또 어디서 나가는지 알고싶어서요'):
   // 그 기간에 새로 온 계정이 지금 멈춰 있는 칸 [명, 떠난 명]. 떠남 = 24시간 넘게 안 옴 (오늘 새로 온 계정은 2시간). 옛 서버면 칸을 숨김
-  const quitView = segPick("quitSeg", "acorn_ops_quit_win", "7d", () => drawQuit());
+  // 위 큰 숫자 셋: 들어온 플레이어 · 새 계정 · 그중 떠남 (사용자 11-26 '새계정 몇명에서 몇명떠난건지 잘보였으면해 text가 작아서')
+  const qbar = (label, n, g, mx) => {
+    const stay = Math.max(0, n - g);
+    return '<div class="hbar" title="' + esc(label + " · 새 계정 " + fmt(n) + "명 중 떠남 " + fmt(g) + "명") + '"><span>' + esc(label) + "</span>" +
+      '<div class="track"><div class="qfill" style="width:' + (100 * n / mx) + '%">' +
+      (stay ? '<i class="q-stay" style="flex-grow:' + stay + '"></i>' : "") + (g ? '<i class="q-gone" style="flex-grow:' + g + '"></i>' : "") +
+      '</div></div><span class="c"><b>' + fmt(n) + '</b>명<span class="q-g">떠남 <b>' + fmt(g) + "</b></span></span></div>";
+  };
   function drawQuit() {
     const d = lastData || {};
-    $("quitCard").classList.toggle("hide", !d.quit_7d);
-    if (!d.quit_7d) return;
-    const v = quitView();
+    const ok = !!(d.quit_7d && d.prog_7d);
+    $("quitCard").classList.toggle("hide", !ok);
+    $("pqSum").classList.toggle("hide", !ok);
+    if (!ok) return;
+    const v = stageView();
     const q = d["quit_" + v] || {};
     const sum = (i) => ZONE_KEYS.reduce((a, [k]) => a + ((q[k] || [])[i] || 0), 0);
     const all = sum(0), gone = sum(1);
-    segMark("quitSeg", v);
-    $("quitNote").textContent = WIN_NAME[v] + " 새 계정 " + fmt(all) + "개가 지금 멈춘 곳 · 그중 떠남 " + fmt(gone) + "개 (" +
-      (v === "0d" ? "2시간" : "24시간") + " 넘게 안 옴). 1-1 못 깸 = 바로 나감";
+    const players = ZONE_KEYS.slice(1).reduce((a, [k]) => a + ((d["prog_" + v] || {})[k] || 0), 0);
+    const pct = all ? Math.round(100 * gone / all) : 0;
+    const cell = (k, val, n) => '<div><div class="k">' + esc(k) + '</div><div class="v">' + val + '<small>명</small></div><div class="n">' + esc(n) + "</div></div>";
+    $("pqSum").innerHTML =
+      cell("들어온 플레이어", fmt(players), "1-1 깬 계정") +
+      cell("새 계정", fmt(all), WIN_NAME[v] + " 가입") +
+      cell("그중 떠남", fmt(gone), pct + "% · 남음 " + fmt(all - gone) + "명");
+    $("quitNote").textContent = "새 계정이 지금 멈춘 곳 · 떠남 = " + (v === "0d" ? "2시간" : "24시간") + " 넘게 안 옴 · 1-1 못 깸 = 바로 나감";
     const shown = ZONE_KEYS.filter(([k]) => (q[k] || [])[0]);
     if (!shown.length) { $("quits").innerHTML = '<div class="muted">아직 없어요.</div>'; return; }
     const mx = Math.max(1, ...shown.map(([k]) => q[k][0]));
-    $("quits").innerHTML = '<div class="qbars">' + shown.map(([k, label]) => {
-      const [n, g] = q[k];
-      return hbar(label, n, mx, fmt(n) + '<span class="pct">' + (all ? Math.round(100 * n / all) : 0) + "%</span>" +
-        '<span class="gone">떠남 ' + fmt(g) + "</span>");
-    }).join("") + "</div>";
+    $("quits").innerHTML = '<div class="qbars">' + shown.map(([k, label]) => qbar(label, q[k][0], q[k][1] || 0, mx)).join("") + "</div>";
   }
 
   // 상품별 판매: 최근 24시간 · 7일 · 전체 (96단계 서버 products). 고른 칸은 이 기기에만 기억.
@@ -625,7 +659,22 @@ input[type=password], input[type=text] {
     const need = Number(f.review || 0);
     $("flagNeed").classList.toggle("hide", need <= 0);
     $("flagNeed").textContent = "확인 필요 " + fmt(need);
-    $("flagNote").textContent = "지금 제한 중 " + fmt(f.open) + "개 · 최근 7일에 새로 걸린 계정 " + fmt(f.week) + "개";
+    // 걸린 때 'MM-DD HH:MI' (한국 시간) → 몇 시간 전 · 목록에서 빠지는 때 (걸린 지 7일 = 168시간, 사용자 11-26 '7일 지난거 정리가안되네')
+    const KST = 9 * 3600e3, DAY = 86400e3;
+    const flagT = (at) => {
+      const m = /^(\d\d)-(\d\d) (\d\d):(\d\d)$/.exec(at || "");
+      if (!m) return null;
+      const y = new Date(Date.now() + KST).getUTCFullYear();
+      let t = Date.UTC(y, m[1] - 1, +m[2], +m[3], +m[4]) - KST;
+      if (t > Date.now() + DAY) t = Date.UTC(y - 1, m[1] - 1, +m[2], +m[3], +m[4]) - KST;      // 1월에 본 12월 깃발
+      return t;
+    };
+    const kstAt = (t) => { const x = new Date(t + KST); const p2 = (n) => String(n).padStart(2, "0");
+      return p2(x.getUTCMonth() + 1) + "-" + p2(x.getUTCDate()) + " " + p2(x.getUTCHours()) + ":" + p2(x.getUTCMinutes()); };
+    const ts = list.map((r) => flagT(r.at)).filter((t) => t !== null);
+    const oldest = ts.length && list.length === Number(f.week) ? Math.min(...ts) : null;      // 목록이 30개로 잘렸으면 맨 오래된 걸 모름
+    $("flagNote").textContent = "지금 제한 중 " + fmt(f.open) + "개 · 최근 7일에 새로 걸린 계정 " + fmt(f.week) + "개" +
+      (oldest !== null ? " · 다음에 빠지는 때 " + kstAt(oldest + 7 * DAY) : "");
     const has = (v) => v !== null && v !== undefined;
     // 고친 앱은 보석을 10의 307제곱까지 넣는다: 조 단위부터는 자릿수로만
     const big = (n) => {
@@ -635,6 +684,8 @@ input[type=password], input[type=text] {
     };
     const ago = (h) => (h < 1 ? Math.max(1, Math.round(h * 60)) + "분 전" : h < 48 ? Math.round(h) + "시간 전" : Math.floor(h / 24) + "일 전");
     const line = (t) => (t ? '<div class="muted w">' + esc(t) + "</div>" : "");
+    const age = (at) => { const t = flagT(at); if (t === null) return ""; const h = Math.max(0, (Date.now() - t) / 3600e3);
+      return "걸린 지 " + (h < 24 ? Math.max(1, Math.round(h)) + "시간" : Math.floor(h / 24) + "일"); };
     $("flags").innerHTML = list.length ? list.map((r) => {
       const rs = Array.isArray(r.reasons) ? r.reasons : [];
       const why = rs.map((k) => (k === "clock" && has(r.clock_d) && r.clock_d >= 1 ? "폰 시계 " + fmt(Math.round(r.clock_d)) + "일 앞" : FLAG_WHY[k] || k)).join(" · ");
@@ -650,10 +701,10 @@ input[type=password], input[type=text] {
       const seen = [r.made ? "가입 " + r.made : "", r.seen ? "마지막 접속 " + r.seen + (has(r.seen_h) ? " (" + ago(Number(r.seen_h)) + ")" : "") : ""].filter(Boolean).join(" · ");
       return '<div class="order' + (r.review ? " rv" : "") + '"><div class="p"><div class="w"><b>' + esc((r.name || "보안관") + " #" + r.tag) + "</b>" +
         (r.review ? '<span class="pill bad">확인 필요</span>' : "") + (r.soft ? '<span class="pill">순위만 숨김</span>' : "") +
-        (r.back === true ? '<span class="pill">걸린 뒤에도 접속</span>' : r.back === false ? '<span class="pill">걸린 뒤 접속 없음</span>' : "") + "</div>" +
+        (r.back === true ? '<span class="pill warn">걸린 뒤에도 접속</span>' : r.back === false ? '<span class="pill">걸린 뒤 접속 없음</span>' : "") + "</div>" +
         line("이유: " + [why || "-", cnt].filter(Boolean).join(" · ")) +
         line(who) + line(held ? "가진 양: " + held : "") + line(prog) + line(seen) +
-        "</div><span>" + esc(r.at || "") + "</span></div>";
+        '</div><span class="fat">' + esc(r.at || "") + (age(r.at) ? "<em>" + age(r.at) + "</em>" : "") + "</span></div>";
     }).join("") : '<div class="muted">최근 7일 동안 새로 걸린 계정이 없어요.</div>';
   }
 
